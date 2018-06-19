@@ -2,67 +2,6 @@
 <html lang="en">
 <head>
 <title>Chat Example</title>
-<script type="text/javascript">
-function setCookie(name,value,days) {
-    var expires = "";
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-}
-window.onload = function () {
-    var conn;
-    var msg = document.getElementById("msg");
-    var user = document.getElementById("user_id");
-    var log = document.getElementById("log");
-
-    function appendLog(item) {
-        var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
-        log.appendChild(item);
-        if (doScroll) {
-            log.scrollTop = log.scrollHeight - log.clientHeight;
-        }
-    }
-
-    document.getElementById("form").onsubmit = function () {
-        if (!conn) {
-            return false;
-        }
-        if (!msg.value) {
-            return false;
-        }
-        conn.send(
-            user.value + '&' + msg.value
-        );
-        msg.value = "";
-        return false;
-    };
-
-    if (window["WebSocket"]) {
-        conn = new WebSocket("ws://" + document.location.host + "/ws");
-        setCookie('user_id', 1, 1);
-        conn.onclose = function (evt) {
-            var item = document.createElement("div");
-            item.innerHTML = "<b>Connection closed.</b>";
-            appendLog(item);
-        };
-        conn.onmessage = function (evt) {
-            var messages = evt.data.split('\n');
-            for (var i = 0; i < messages.length; i++) {
-                var item = document.createElement("div");
-                item.innerText = messages[i];
-                appendLog(item);
-            }
-        };
-    } else {
-        var item = document.createElement("div");
-        item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
-        appendLog(item);
-    }
-};
-</script>
 <style type="text/css">
 html {
     overflow: hidden;
@@ -102,11 +41,76 @@ body {
 </style>
 </head>
 <body>
-<div id="log"></div>
-<form id="form">
-    <input type="submit" value="Send" />
-    <input type="text" id="msg" size="64"/>
-    <input type="number" id="user_id"/>
-</form>
+    <div id="app">
+        <div id="log"></div>
+        <div id="form">
+            <input type="button" @click="submitContent" value="Submit"/>
+            <input type="text" name="content" v-model="content" size="64"/>
+            <select name="room" v-model="room_id" @change="changeRoom">
+                <option v-for="room in rooms">{{ room }}</option>
+            </select>
+        </div>
+    </div>
 </body>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script type="text/javascript">
+    var app = new Vue({
+        el: '#app',
+        data: {
+            room_id: 'first',
+            rooms: [
+                'first',
+                'second',
+            ],
+            conn: "",
+            content: "",
+        },
+        created: function() {
+            this.websocket_start(this.room_id);
+        },
+        methods: {
+            submitContent: function(){
+                this.conn.send(this.content);
+            },
+            websocket_close: function(){
+               this.conn.close();
+            },
+            websocket_start: function(room_id){
+                var that = this;
+                if (window["WebSocket"]) {
+                    this.conn = new WebSocket("ws://" + document.location.host + "/ws?room_id=" + room_id);
+                    this.conn.onmessage = function (evt) {
+                        var messages = evt.data.split('\n');
+                        for (var i = 0; i < messages.length; i++) {
+                            var item = document.createElement("div");
+                            item.innerText = messages[i];
+                            that.appendLog(item);
+                        }
+                    };
+                } else {
+                    var item = document.createElement("div");
+                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    this.appendLog(item);
+                }
+            },
+            appendLog: function(item) {
+                var log = document.getElementById("log");
+                var doScroll = log.scrollTop > log.scrollHeight - log.clientHeight - 1;
+                log.appendChild(item);
+                if (doScroll) {
+                    log.scrollTop = log.scrollHeight - log.clientHeight;
+                }
+            },
+            changeRoom: function () {
+                var log = document.getElementById("log");
+                var childs = log.childNodes;
+                for(var i = 0; i < childs.length; i++) {
+                    log.removeChild(childs[i]);
+                }
+                this.websocket_close();
+                this.websocket_start(this.room_id);
+            }
+        }
+    })
+</script>
 </html>

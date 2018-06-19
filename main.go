@@ -8,44 +8,44 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"time"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
 
-func serveHomeid1(w http.ResponseWriter, r *http.Request) {
+func serveHome(w http.ResponseWriter, r *http.Request)  {
 	log.Println(r.URL)
-	if r.URL.Path != "/1" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	http.ServeFile(w, r, "H:/go_project/examples/chat/home.html")
-}
-
-func serveHomeid2(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL)
-	if r.URL.Path != "/2" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
+	cookie_age := time.Hour * 24 / time.Second
+	userid_cookie:=&http.Cookie{
+		Name:   "user_id",
+		Value:    r.FormValue("user_id"),
+		Path:     "/",
+		HttpOnly: false,
+		MaxAge:  int(cookie_age),
 	}
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	http.ServeFile(w, r, "H:/go_project/examples/chat/home2.html")
+	http.SetCookie(w, userid_cookie)
+	http.ServeFile(w, r, "/home/zhouhao/go/src/awesomeProject1/go_ws/home.html")
 }
 
 func main() {
 	flag.Parse()
-	hub := newHub()
-	go hub.run()
-	http.HandleFunc("/1", serveHomeid1)
-	http.HandleFunc("/2", serveHomeid2)
+	threate := newTheatre()
+	go threate.run()
+	http.HandleFunc("/home", serveHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		room := r.FormValue("room_id")
+		if _, ok := threate.hubs[room]; ok {
+			serveWs(threate.hubs[room], w, r)
+		} else {
+			empty_hub := newHub()
+			empty_hub.room_id = room
+			threate.register <- empty_hub
+			serveWs(empty_hub, w, r)
+		}
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
