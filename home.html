@@ -42,9 +42,13 @@ body {
 </head>
 <body>
     <div id="app">
-        <div id="log"></div>
+        <div id="log">
+            <div v-for="content in contents">{{ content }}</div>
+        </div>
         <div id="form">
             <input type="button" @click="submitContent" value="Submit"/>
+            <label for="username">User Name</label>
+            <input type="text" name="username" v-model="username" size="10"/>
             <input type="text" name="content" v-model="content" size="64"/>
             <select name="room" v-model="room_id" @change="changeRoom">
                 <option v-for="room in rooms">{{ room }}</option>
@@ -63,14 +67,15 @@ body {
                 'second',
             ],
             conn: "",
-            content: "",
+            contents: [],
+            username: "",
         },
         created: function() {
             this.websocket_start(this.room_id);
         },
         methods: {
             submitContent: function(){
-                this.conn.send(this.content);
+                this.conn.send(this.username+':'+this.content);
             },
             websocket_close: function(){
                this.conn.close();
@@ -82,9 +87,7 @@ body {
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
-                            var item = document.createElement("div");
-                            item.innerText = messages[i];
-                            that.appendLog(item);
+                            that.contents.push(messages[i]);
                         }
                     };
                 } else {
@@ -102,11 +105,7 @@ body {
                 }
             },
             changeRoom: function () {
-                var log = document.getElementById("log");
-                var childs = log.childNodes;
-                for(var i = 0; i < childs.length; i++) {
-                    log.removeChild(childs[i]);
-                }
+                this.contents = [];
                 this.websocket_close();
                 this.websocket_start(this.room_id);
             }

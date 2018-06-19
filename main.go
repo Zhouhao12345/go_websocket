@@ -28,7 +28,7 @@ func serveHome(w http.ResponseWriter, r *http.Request)  {
 		MaxAge:  int(cookie_age),
 	}
 	http.SetCookie(w, userid_cookie)
-	http.ServeFile(w, r, "/home/zhouhao/go/src/awesomeProject1/go_ws/home.html")
+	http.ServeFile(w, r, "E:/centosData/go_ws/home.html")
 }
 
 func main() {
