@@ -1,4 +1,4 @@
-package main
+package views
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
@@ -12,7 +12,7 @@ type Theatre struct {
 	unregister chan *Hub
 }
 
-func newTheatre() *Theatre {
+func NewTheatre() *Theatre {
 	return &Theatre{
 		hubs: make(map[string]*Hub),
 		register:   make(chan *Hub),
@@ -20,7 +20,7 @@ func newTheatre() *Theatre {
 	}
 }
 
-func (t *Theatre) run() {
+func (t *Theatre) Run() {
 	for {
 		select {
 			case hub :=<- t.register:

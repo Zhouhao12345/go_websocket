@@ -6,49 +6,23 @@ package main
 
 import (
 	"flag"
-	"log"
 	"net/http"
-	"time"
+	"go_ws/views"
+	"log"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
 
-func serveHome(w http.ResponseWriter, r *http.Request)  {
-	log.Println(r.URL)
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	cookie_age := time.Hour * 24 / time.Second
-	userid_cookie:=&http.Cookie{
-		Name:   "user_id",
-		Value:    r.FormValue("user_id"),
-		Path:     "/",
-		HttpOnly: false,
-		MaxAge:  int(cookie_age),
-	}
-	http.SetCookie(w, userid_cookie)
-	http.ServeFile(w, r, "E:/centosData/go_ws/home.html")
-}
-
 func main() {
 	flag.Parse()
-	threate := newTheatre()
-	go threate.run()
-	http.HandleFunc("/home", serveHome)
+	threate := views.NewTheatre()
+	go threate.Run()
+	http.HandleFunc("/home", views.ServeHome)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		room := r.FormValue("room_id")
-		if _, ok := threate.hubs[room]; ok {
-			serveWs(threate.hubs[room], w, r)
-		} else {
-			empty_hub := newHub()
-			empty_hub.room_id = room
-			threate.register <- empty_hub
-			serveWs(empty_hub, w, r)
-		}
+		views.Ws(w,r,threate)
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatalln(err)
 	}
 }

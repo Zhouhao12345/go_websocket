@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 )
 
 const (
@@ -26,7 +27,6 @@ func dbInit() *sql.DB{
 
 
 func (m *Models) SelectQuery(stringQuery string) []map[string]string {
-	var value_list []map[string]string
 	db := dbInit()
 	rows, err := db.Query(stringQuery)
 	checkErr(err)
@@ -38,6 +38,7 @@ func (m *Models) SelectQuery(stringQuery string) []map[string]string {
 		scanArgs[i] = &values[i]
 	}
 
+	var valueList []map[string]string
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
 		checkErr(err)
@@ -51,10 +52,10 @@ func (m *Models) SelectQuery(stringQuery string) []map[string]string {
 			}
 			row[columns[i]] = value
 		}
-		value_list = append(value_list, row)
+		valueList = append(valueList, row)
 	}
 	if err = rows.Err(); err != nil {
-		panic(err.Error())
+		log.Fatalln(err.Error())
 	}
 	db.Close()
 	return value_list
@@ -62,6 +63,6 @@ func (m *Models) SelectQuery(stringQuery string) []map[string]string {
 
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 }
