@@ -18,9 +18,11 @@ func main() {
 	threate := views.NewTheatre()
 	go threate.Run()
 	http.HandleFunc("/home", views.ServeHome)
+	http.HandleFunc("/login", views.ServeLogin)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		views.Ws(w,r,threate)
 	})
+	http.HandleFunc("/api/room/list", views.APIRoom)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatalln(err)

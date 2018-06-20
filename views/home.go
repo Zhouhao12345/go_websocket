@@ -2,8 +2,8 @@ package views
 
 import (
 	"net/http"
-	"time"
 	"go_ws/tools"
+	"fmt"
 )
 
 func ServeHome(w http.ResponseWriter, r *http.Request)  {
@@ -13,17 +13,9 @@ func ServeHome(w http.ResponseWriter, r *http.Request)  {
 	}
 	signed, userId := tools.SingleSign(r)
 	if signed == false {
-		http.ServeFile(w, r, "C:/Users/hao.zhou/go/src/go_ws/template/login.html")
+		http.Redirect(w,r,"/login", http.StatusFound)
 		return
 	}
-	cookieAge := time.Hour * 24 / time.Second
-	userCookie:=&http.Cookie{
-		Name:   "user_id",
-		Value:    userId,
-		Path:     "/",
-		HttpOnly: false,
-		MaxAge:  int(cookieAge),
-	}
-	http.SetCookie(w, userCookie)
+	fmt.Println(userId)
 	http.ServeFile(w, r, "C:/Users/hao.zhou/go/src/go_ws/template/home.html")
 }

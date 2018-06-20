@@ -4,14 +4,15 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"go_ws/config"
 )
 
 const (
-	DB_NAME = "ggac"
-	DB_USERNAME = "root"
-	DB_PASSWORD = "Hello.123"
-	DB_HOST = "192.168.64.146"
-	DB_PORT = "3328"
+	DB_NAME = config.GLOBAL_DB_NAME
+	DB_USERNAME = config.GLOBAL_DB_USERNAME
+	DB_PASSWORD = config.GLOBAL_DB_PASSWORD
+	DB_HOST = config.GLOBAL_DB_HOST
+	DB_PORT = config.GLOBAL_DB_PORT
 )
 
 type Models struct {
@@ -58,7 +59,7 @@ func (m *Models) SelectQuery(stringQuery string) []map[string]string {
 		log.Fatalln(err.Error())
 	}
 	db.Close()
-	return value_list
+	return valueList
 }
 
 func checkErr(err error) {

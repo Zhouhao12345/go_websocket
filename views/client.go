@@ -9,9 +9,9 @@ import (
 	"log"
 	"net/http"
 	"time"
-
 	"github.com/gorilla/websocket"
 	"strconv"
+	"go_ws/tools"
 )
 
 const (
@@ -126,16 +126,16 @@ func (c *Client) writePump() {
 func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		http.Error(w, "Connect Forbidden!", http.StatusForbidden)
 		return
 	}
-	user, err := r.Cookie("user_id")
-	if err != nil {
-		log.Println(err)
+	signed, userId := tools.SingleSign(r)
+	if signed == false {
+		http.Error(w, "Please Sign in!", http.StatusOK)
 		return
 	}
-	user_id, err := strconv.Atoi(user.Value)
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), user: user_id}
+	userIdInt, err := strconv.Atoi(userId)
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), user: userIdInt}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in
