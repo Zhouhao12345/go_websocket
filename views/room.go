@@ -21,6 +21,7 @@ func APIRoom(w http.ResponseWriter, r *http.Request) {
 	var roomRows []map[string]string = m.SelectQuery(
 		"select room.id as rid , room.desc as des from web_chatroom as room inner join web_chatroom_users as " +
 			"chroom on room.id = chroom.chatroom_id where chroom.ggacuser_id = " + userId)
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(roomRows)
 	return
 }
