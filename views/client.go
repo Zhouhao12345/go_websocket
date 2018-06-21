@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 	"github.com/gorilla/websocket"
-	"strconv"
 	"go_ws/tools"
+	"go_ws/models"
 )
 
 const (
@@ -41,8 +41,9 @@ var upgrader = websocket.Upgrader{
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub
-	user int
-
+	user string
+	username string
+	image string
 	// The websocket connection.
 	conn *websocket.Conn
 
@@ -72,7 +73,10 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
+
+		// combine message with from user info
+ 		messageFullByte := []byte(string(c.user)+"&"+c.username+"&"+c.image+"&"+string(message))
+		c.hub.broadcast <- messageFullByte
 	}
 }
 
@@ -134,8 +138,22 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please Sign in!", http.StatusOK)
 		return
 	}
-	userIdInt, err := strconv.Atoi(userId)
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256), user: userIdInt}
+	m := &models.Models{}
+	userRow, err := m.SelectQuery(
+		"select user.username, guser.avatar_image as image from auth_user as user " +
+			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id where user.id = " + userId)
+	if err != nil {
+		http.Error(w, "DB ERROR", http.StatusInternalServerError)
+		return
+	}
+	client := &Client{
+		hub: hub,
+		conn: conn,
+		send: make(chan []byte, 256),
+		user: userId,
+		username:userRow[0]["username"],
+		image:userRow[0]["image"],
+		}
 	client.hub.register <- client
 
 	// Allow collection of memory referenced by the caller by doing all work in

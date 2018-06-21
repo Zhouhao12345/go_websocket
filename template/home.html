@@ -43,15 +43,13 @@ body {
 <body>
     <div id="app">
         <div id="log">
-            <div v-for="content in contents">{{ content }}</div>
+            <div v-for="message in messages">{{message.from_name}}:{{ message.content }}</div>
         </div>
         <div id="form">
             <input type="button" @click="submitContent" value="Submit"/>
-            <label for="username">User Name</label>
-            <input type="text" name="username" v-model="username" size="10"/>
             <input type="text" name="content" v-model="content" size="64"/>
             <select name="room" v-model="room_id" @change="changeRoom">
-                <option v-for="room in rooms">{{ room }}</option>
+                <option :value="room.rid" v-for="room in rooms">{{ room.des }}</option>
             </select>
         </div>
     </div>
@@ -62,36 +60,53 @@ body {
     var app = new Vue({
         el: '#app',
         data: {
-            room_id: 'first',
-            rooms: [
-                'first',
-                'second',
-            ],
-            conn: "",
+            room_id: 0,
+            rooms: [],
+            conn: false,
             content: "",
-            contents: [],
-            username: "",
+            messages: [],
+            username: ""
         },
         created: function() {
             this.get_room_list();
-            this.websocket_start(this.room_id);
         },
         methods: {
             get_room_list: function () {
+                var that = this;
                 $.ajax("/api/room/list", {
                     data: {},
-                    dataType: 'json', //要求服务器返回json格式数据
-                    type: 'GET', //HTTP请求类型，要和服务端对应，要么GET,要么POST
+                    dataType: 'json',
+                    type: 'GET',
                     success: function(response) {
-                        console.log(response)
+                        that.rooms = response;
                     }
-                }); //ajax end
+                });
+            },
+            get_room_messages: function (room_id) {
+                var that = this;
+                $.ajax("/api/room/message/list", {
+                    data: {
+                        'room_id': room_id
+                    },
+                    dataType: 'json',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response === null)
+                        {
+                            that.messages = []
+                        } else {
+                            that.messages = response
+                        }
+                    }
+                });
             },
             submitContent: function(){
-                this.conn.send(this.username+':'+this.content);
+                this.conn.send(this.content);
             },
             websocket_close: function(){
-               this.conn.close();
+                if(this.conn) {
+                    this.conn.close();
+                }
             },
             websocket_start: function(room_id){
                 var that = this;
@@ -100,7 +115,21 @@ body {
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
-                            that.contents.push(messages[i]);
+                            var message_array = messages[i].split('&');
+                            var room_id = message_array[0];
+                            var user_id = message_array[1];
+                            var user_name = message_array[2];
+                            var image = message_array[3];
+                            var content = message_array[4];
+                            var message_dict = {
+                                mid: 0,
+                                content: content,
+                                rid: room_id,
+                                from_uid: user_id,
+                                from_name: user_name,
+                                image: image
+                            };
+                            that.messages.push(message_dict);
                         }
                     };
                 } else {
@@ -118,8 +147,9 @@ body {
                 }
             },
             changeRoom: function () {
-                this.contents = [];
+                this.messages = [];
                 this.websocket_close();
+                this.get_room_messages(this.room_id);
                 this.websocket_start(this.room_id);
             }
         }

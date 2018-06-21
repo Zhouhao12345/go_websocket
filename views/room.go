@@ -18,9 +18,19 @@ func APIRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m := &models.Models{}
-	var roomRows []map[string]string = m.SelectQuery(
-		"select room.id as rid , room.desc as des from web_chatroom as room inner join web_chatroom_users as " +
-			"chroom on room.id = chroom.chatroom_id where chroom.ggacuser_id = " + userId)
+
+	//todo fixme improve it
+	roomRows, err := m.SelectQuery(
+		"select room.id as rid , room.desc as des, count(message.id) as unread from web_chatroom as room " +
+			"inner join web_chatroom_users as chroom on room.id = chroom.chatroom_id " +
+				"left join web_chatmessage as message on message.room_id = chroom.chatroom_id and " +
+					"message.unread = 1 and message.user_id != " + userId +
+						" where chroom.ggacuser_id = " + userId + " group by room.id")
+
+	if err != nil {
+		http.Error(w, "DB ERROR", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(roomRows)
 	return

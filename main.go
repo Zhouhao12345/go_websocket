@@ -23,6 +23,7 @@ func main() {
 		views.Ws(w,r,threate)
 	})
 	http.HandleFunc("/api/room/list", views.APIRoom)
+	http.HandleFunc("/api/room/message/list", views.APIMessage)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatalln(err)

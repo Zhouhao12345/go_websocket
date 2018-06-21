@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"go_ws/config"
 )
 
@@ -18,31 +17,42 @@ const (
 type Models struct {
 }
 
-func dbInit() *sql.DB{
+func dbInit() (*sql.DB, error){
 	db, err := sql.Open(
 		"mysql",
 		DB_USERNAME+":"+DB_PASSWORD+"@tcp("+DB_HOST+":"+DB_PORT+")/"+DB_NAME+"?charset=utf8")
-	checkErr(err)
-	return db
+	if err != nil {
+		return db, err
+	}
+	return db, nil
 }
 
 
-func (m *Models) SelectQuery(stringQuery string) []map[string]string {
-	db := dbInit()
+func (m *Models) SelectQuery(stringQuery string) ([]map[string]string, error) {
+	var valueList []map[string]string
+	db, err := dbInit()
+	if err != nil {
+		return valueList, err
+	}
 	rows, err := db.Query(stringQuery)
-	checkErr(err)
+	if err != nil {
+		return valueList, err
+	}
 	columns, err := rows.Columns()
-	checkErr(err)
+	if err != nil {
+		return valueList, err
+	}
 	values := make([]sql.RawBytes, len(columns))
 	scanArgs := make([]interface{}, len(values))
 	for i := range values {
 		scanArgs[i] = &values[i]
 	}
 
-	var valueList []map[string]string
 	for rows.Next() {
 		err = rows.Scan(scanArgs...)
-		checkErr(err)
+		if err != nil {
+			return valueList, err
+		}
 		var value string
 		row := make(map[string]string)
 		for i, col := range values {
@@ -56,14 +66,22 @@ func (m *Models) SelectQuery(stringQuery string) []map[string]string {
 		valueList = append(valueList, row)
 	}
 	if err = rows.Err(); err != nil {
-		log.Fatalln(err.Error())
+		return valueList, err
 	}
 	db.Close()
-	return valueList
+	return valueList, nil
 }
 
-func checkErr(err error) {
+func (m *Models) InsertQuery(stringQuery string) (error) {
+	db, err := dbInit()
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
+	stmtIns, err := db.Prepare(stringQuery)
+	if err != nil {
+		return err
+	}
+	stmtIns.Exec()
+	db.Close()
+	return nil
 }

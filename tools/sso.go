@@ -14,8 +14,13 @@ func SingleSign(r *http.Request) (signed bool, userId string) {
 		return false, "0"
 	}
 	m := &models.Models{}
-	var sessionRow []map[string]string = m.SelectQuery(
+
+	//todo fixme improve it
+	sessionRow, err := m.SelectQuery(
 		"select session_data from django_session where session_key = '"+sessionId.Value+"'")
+	if err != nil {
+		return false, "0"
+	}
 	if len(sessionRow) == 0 {
 		return false, "0"
 	}
