@@ -36,18 +36,53 @@ body {
     left: 0px;
     width: 100%;
     overflow: hidden;
-}
-
+}   .other-box,
+    .self-box{
+        margin-bottom: 20px;
+    }
+    .self-box {
+        text-align: right;
+    }
+    .content-header {
+        display: inline-block;
+        width: 70px;
+        padding: 8px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        vertical-align: top;
+    }
+    .content-body {
+        display: inline-block;
+        width: calc(100% - 110px);
+        background-color: #808080;
+        padding: 8px;
+        border-radius: 4px;
+        word-break: break-all;
+        vertical-align: top;
+    }
+    [v-cloak] {
+        display: none;
+    }
 </style>
 </head>
 <body>
-    <div id="app">
+    <div id="app" v-cloak>
         <div id="log">
-            <div v-for="message in messages">{{message.from_name}}:{{ message.content }}</div>
+            <div v-for="message in messages">
+                <div class="other-box">
+                    <span class="content-header">{{message.from_name}}:</span><span class="content-body">{{ message.content }}</span>
+                </div>
+                <!--
+                <div class="self-box">
+                    <span class="content-body">{{ message.content }}</span><span class="content-header">{{message.from_name}}</span>
+                </div>
+                -->
+            </div>
         </div>
         <div id="form">
             <input type="button" @click="submitContent" value="Submit"/>
-            <input type="text" name="content" v-model="content" size="64"/>
+            <input id="contentBox" type="text" name="content" v-model="content" size="64"/>
             <select name="room" v-model="room_id" @change="changeRoom">
                 <option :value="room.rid" v-for="room in rooms">{{ room.des }}</option>
             </select>
@@ -65,6 +100,7 @@ body {
             conn: false,
             content: "",
             messages: [],
+            positions:[],
             username: ""
         },
         created: function() {
@@ -95,13 +131,15 @@ body {
                         {
                             that.messages = []
                         } else {
-                            that.messages = response
+                            that.messages = response;
+                            app.scrollToEnd();
                         }
                     }
                 });
             },
             submitContent: function(){
                 this.conn.send(this.content);
+                app.scrollToEnd();
             },
             websocket_close: function(){
                 if(this.conn) {
@@ -115,21 +153,22 @@ body {
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
-                            var message_array = messages[i].split('&');
-                            var room_id = message_array[0];
-                            var user_id = message_array[1];
-                            var user_name = message_array[2];
-                            var image = message_array[3];
-                            var content = message_array[4];
-                            var message_dict = {
+                            that.positions = [];
+                            that.SearchSubStr(messages[i], '&');
+                            //var message_array = messages[i].split('&');
+                            var room_id = messages[i].substring(0, that.positions[0]);
+                            var user_id = messages[i].substring(that.positions[0]+1, that.positions[1]);
+                            var user_name = messages[i].substring(that.positions[1]+1, that.positions[2]);
+                            var image = messages[i].substring(that.positions[2]+1, that.positions[3]);
+                            var content = messages[i].substring(that.positions[3]+1);
+                            that.messages.push({
                                 mid: 0,
                                 content: content,
                                 rid: room_id,
                                 from_uid: user_id,
                                 from_name: user_name,
                                 image: image
-                            };
-                            that.messages.push(message_dict);
+                            });
                         }
                     };
                 } else {
@@ -151,6 +190,20 @@ body {
                 this.websocket_close();
                 this.get_room_messages(this.room_id);
                 this.websocket_start(this.room_id);
+            },
+            SearchSubStr: function(str,subStr){
+                var pos = str.indexOf(subStr);
+                while(pos>-1){
+                    app.positions.push(pos);
+                    pos = str.indexOf(subStr,pos+1);
+                }
+                console.log(app.positions);
+            },
+            scrollToEnd:function(){//滚动到底部
+                //var div = document.getElementById('log');
+               // div.scrollTop = div.scrollHeight;
+                $('#log').animate({scrollTop:$('#log').height() + 99999 + 'px'},100);
+                $("#contentBox").val("");
             }
         }
     })
