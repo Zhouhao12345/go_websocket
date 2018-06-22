@@ -72,7 +72,7 @@ func (m *Models) SelectQuery(stringQuery string) ([]map[string]string, error) {
 	return valueList, nil
 }
 
-func (m *Models) InsertQuery(stringQuery string) (error) {
+func (m *Models) InsertQuery(stringQuery string, args ...interface{}) (error) {
 	db, err := dbInit()
 	if err != nil {
 		return err
@@ -82,13 +82,13 @@ func (m *Models) InsertQuery(stringQuery string) (error) {
 	if err != nil {
 		return err
 	}
-	stmtIns.Exec()
+	stmtIns.Exec(args...)
 	tx.Commit()
 	db.Close()
 	return nil
 }
 
-func (m *Models) UpdateQuery(stringQuery string) (error) {
+func (m *Models) UpdateQuery(stringQuery string, args ...interface{}) (error) {
 	db, err := dbInit()
 	if err != nil {
 		return err
@@ -98,13 +98,13 @@ func (m *Models) UpdateQuery(stringQuery string) (error) {
 	if err != nil {
 		return err
 	}
-	stmtIns.Exec()
+	stmtIns.Exec(args...)
 	tx.Commit()
 	db.Close()
 	return nil
 }
 
-func (m *Models) DeleteQuery(stringQuery string) (error) {
+func (m *Models) DeleteQuery(stringQuery string, args ...interface{}) (error) {
 	db, err := dbInit()
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (m *Models) DeleteQuery(stringQuery string) (error) {
 	if err != nil {
 		return err
 	}
-	stmtIns.Exec()
+	stmtIns.Exec(args...)
 	tx.Commit()
 	db.Close()
 	return nil

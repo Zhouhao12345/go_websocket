@@ -37,7 +37,7 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	err1 := m.UpdateQuery(
 		"UPDATE web_chatmessage INNER JOIN web_chatroom on web_chatroom.id = web_chatmessage.room_id" +
-			" set unread = 0 WHERE web_chatroom.id = "+room+" AND web_chatmessage.user_id != "+ useId)
+			" set unread = 0 WHERE web_chatroom.id = ? AND web_chatmessage.user_id != ?", room, useId)
 	if err1 != nil {
 		log.Printf("error: %v", err1)
 		http.Error(w, err1.Error(), http.StatusInternalServerError)

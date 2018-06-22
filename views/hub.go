@@ -51,11 +51,11 @@ func (h *Hub) run() {
 			}
 		case message := <-h.broadcast:
 			current := time.Now()
+			current_time := current.In(h.theatre.local).Format("2006-01-02 15:04:05")
 			messageArray := strings.SplitN(string(message), "&", 4)
 			userId := messageArray[0]
 			content := messageArray[3]
-			messageFullByte := []byte(h.room_id+"&"+
-				current.In(h.theatre.local).Format("2006-01-02 15:04:05.000000")+"&"+string(message))
+			messageFullByte := []byte(h.room_id+"&"+ current_time+"&"+string(message))
 			m := &models.Models{}
 
 			// todo fixme unread should in improve
@@ -66,12 +66,11 @@ func (h *Hub) run() {
 				unread = "1"
 			}
 
-
 			err := m.InsertQuery(
 				"INSERT INTO web_chatmessage ( create_uid, create_date, " +
 					"update_uid, update_date, content, unread, room_id, user_id ) VALUES" +
-					"("+userId+", NOW() + INTERVAL 8 HOUR , "+userId+", " +
-					"NOW() + INTERVAL 8 HOUR, '"+content+"' , "+ unread +", "+h.room_id+", "+userId+")")
+					"(?, ?, ?, ?, ?, ?, ?, ?)",
+					userId, current_time , userId, current_time ,content, unread, h.room_id, userId)
 			if err != nil {
 				log.Printf("error: %v", err)
 			}
