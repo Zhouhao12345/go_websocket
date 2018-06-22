@@ -5,6 +5,7 @@ import (
 	"go_ws/models"
 	"go_ws/tools"
 	"encoding/json"
+	"log"
 )
 
 func APIMessage(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,7 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	room := r.FormValue("room_id")
-	signed, _ := tools.SingleSign(r)
+	signed, useId := tools.SingleSign(r)
 	if signed == false {
 		http.Error(w, "Please sign in firstly!", http.StatusOK)
 		return
@@ -30,7 +31,16 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id" +
 			" where message.room_id = " + room + " order by message.create_date")
 	if err != nil {
+		log.Printf("error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err1 := m.UpdateQuery(
+		"UPDATE web_chatmessage INNER JOIN web_chatroom on web_chatroom.id = web_chatmessage.room_id" +
+			" set unread = 0 WHERE web_chatroom.id = "+room+" AND web_chatmessage.user_id != "+ useId)
+	if err1 != nil {
+		log.Printf("error: %v", err1)
+		http.Error(w, err1.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

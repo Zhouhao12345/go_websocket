@@ -77,11 +77,45 @@ func (m *Models) InsertQuery(stringQuery string) (error) {
 	if err != nil {
 		return err
 	}
+	tx,_ := db.Begin()
 	stmtIns, err := db.Prepare(stringQuery)
 	if err != nil {
 		return err
 	}
 	stmtIns.Exec()
+	tx.Commit()
+	db.Close()
+	return nil
+}
+
+func (m *Models) UpdateQuery(stringQuery string) (error) {
+	db, err := dbInit()
+	if err != nil {
+		return err
+	}
+	tx,_ := db.Begin()
+	stmtIns, err := db.Prepare(stringQuery)
+	if err != nil {
+		return err
+	}
+	stmtIns.Exec()
+	tx.Commit()
+	db.Close()
+	return nil
+}
+
+func (m *Models) DeleteQuery(stringQuery string) (error) {
+	db, err := dbInit()
+	if err != nil {
+		return err
+	}
+	tx,_ := db.Begin()
+	stmtIns, err := db.Prepare(stringQuery)
+	if err != nil {
+		return err
+	}
+	stmtIns.Exec()
+	tx.Commit()
 	db.Close()
 	return nil
 }

@@ -143,6 +143,7 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		"select user.username, guser.avatar_image as image from auth_user as user " +
 			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id where user.id = " + userId)
 	if err != nil {
+		log.Printf("error: %v", err)
 		http.Error(w, "DB ERROR", http.StatusInternalServerError)
 		return
 	}

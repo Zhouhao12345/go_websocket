@@ -5,6 +5,7 @@ import (
 	"go_ws/models"
 	"go_ws/tools"
 	"encoding/json"
+	"log"
 )
 
 func APIRoom(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +29,7 @@ func APIRoom(w http.ResponseWriter, r *http.Request) {
 						" where chroom.ggacuser_id = " + userId + " group by room.id")
 
 	if err != nil {
+		log.Printf("error: %v", err)
 		http.Error(w, "DB ERROR", http.StatusInternalServerError)
 		return
 	}
