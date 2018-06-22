@@ -15,77 +15,150 @@ body {
     height: 100%;
     background: gray;
 }
-
+#roomList {
+    background: #fff;
+    position: absolute;
+    width: 6em;
+    top: 0.5em;
+    left: 0.5em;
+    right: 0.5em;
+    bottom: 0.5em;
+    overflow: auto;
+}
+.room-box {
+    position: relative;
+    background: #c8c8c8;
+    text-align: center;
+    color: #fff;
+    border-bottom: 1px solid #808080;
+    padding: 0.5em;
+}
+.room-box.is-active {
+    background: #4fe2fe;
+}
+.r-badge {
+    position: absolute;
+    display: inline-block;
+    background: #f56c6c;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    right: 0;
+    top: 0;
+}
 #log {
-    background: white;
+    background: #fff;
     margin: 0;
     padding: 0.5em 0.5em 0.5em 0.5em;
     position: absolute;
     top: 0.5em;
-    left: 0.5em;
+    left: 7em;
     right: 0.5em;
-    bottom: 3em;
+    bottom: 3.5em;
     overflow: auto;
 }
 
 #form {
-    padding: 0 0.5em 0 0.5em;
+    padding: 0.5em;
+    background: #fff;
     margin: 0;
     position: absolute;
-    bottom: 1em;
-    left: 0px;
+    bottom: 0.5em;
+    left: 7em;
     width: 100%;
     overflow: hidden;
-}   .other-box,
-    .self-box{
-        margin-bottom: 20px;
-    }
-    .self-box {
-        text-align: right;
-    }
-    .content-header {
-        display: inline-block;
-        width: 70px;
-        padding: 8px;
-        overflow:hidden;
-        text-overflow:ellipsis;
-        white-space:nowrap;
-        vertical-align: top;
-    }
-    .content-body {
-        display: inline-block;
-        width: calc(100% - 110px);
-        background-color: #808080;
-        padding: 8px;
-        border-radius: 4px;
-        word-break: break-all;
-        vertical-align: top;
-    }
-    [v-cloak] {
-        display: none;
-    }
+}
+.other-box,
+.self-box{
+    margin-bottom: 20px;
+}
+.self-box {
+    text-align: right;
+}
+.content-header {
+    display: inline-block;
+    width: 70px;
+    padding: 8px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    vertical-align: top;
+}
+.content-header  .user-avatar {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #4f4f4f;
+}
+.content-body {
+    display: inline-block;
+    width: 400px;
+    background-color: #808080;
+    padding: 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    vertical-align: top;
+}
+.self-box .content-body {
+    text-align: left;
+}
+.content-time {
+    display: inline-block;
+    width: auto;
+    background-color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    vertical-align: top;
+    margin-left: 20px;
+}
+[v-cloak] {
+    display: none;
+}
 </style>
 </head>
 <body>
     <div id="app" v-cloak>
+        <div id="roomList">
+            <template v-for="(r, index) in rooms">
+                <div class="room-box" :class="{'is-active' : r.isActive}"  @click="changeRoom(index)">
+                    <span class="r-desc">{{r.des}}</span>
+                    <span class="r-badge">{{r.unread}}</span>
+                </div>
+            </template>
+        </div>
         <div id="log">
             <div v-for="message in messages">
-                <div class="other-box">
-                    <span class="content-header">{{message.from_name}}:</span><span class="content-body">{{ message.content }}</span>
+                <div class="self-box" v-if="user==parseInt(message.from_uid)">
+                    <span class="content-time">{{ message.create_date.split('.')[0] }}</span>
+                    <span class="content-body">{{ message.content }}</span>
+                    <span class="content-header">
+                        <img :src="image_prefix + message.image" class="user-avatar"/>
+                    <span>{{message.from_name}}</span>
+                    </span>
                 </div>
-                <!--
-                <div class="self-box">
-                    <span class="content-body">{{ message.content }}</span><span class="content-header">{{message.from_name}}</span>
+                <div class="other-box" v-else>
+                    <span class="content-header">
+                        <img :src="image_prefix + message.image" class="user-avatar"/>
+                        <span>{{message.from_name}}</span>
+                    </span>
+                    <span class="content-body">{{ message.content }}</span>
+                    <span class="content-time">{{ message.create_date.split('.')[0] }}</span>
                 </div>
-                -->
+
+
             </div>
         </div>
         <div id="form">
             <input type="button" @click="submitContent" value="Submit"/>
             <input id="contentBox" type="text" name="content" v-model="content" size="64"/>
+            <!--
             <select name="room" v-model="room_id" @change="changeRoom">
                 <option :value="room.rid" v-for="room in rooms">{{ room.des }}</option>
             </select>
+            -->
         </div>
     </div>
 </body>
@@ -103,10 +176,10 @@ body {
             content: "",
             messages: [],
             positions:[],
-            username: ""
+            username: "",
+            image_prefix: "http://cdn.ggac.net/"
         },
         created: function() {
-            this.get_user();
             this.get_room_list();
             this.websocket_unread_start();
         },
@@ -130,6 +203,8 @@ body {
                     type: 'GET',
                     success: function(response) {
                         that.rooms = response;
+                        that.changeRoom(0);
+                        that.get_user();
                     }
                 });
             },
@@ -153,6 +228,10 @@ body {
                 });
             },
             submitContent: function(){
+                if(this.content.replace(/(^\s*)|(\s*$)/g, "")=="") {
+                    alert("请输入数据");
+                    return;
+                }
                 this.conn.send(this.content);
                 app.scrollToEnd();
             },
@@ -166,7 +245,8 @@ body {
                     this.conn_room = new WebSocket("ws://" + document.location.host + "/ws_unread");
                     this.conn_room.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
-                        console.log(messages[0]);
+                        console.log("recive room id:" + messages[0]);
+                        app.reformRoomUnread(messages[0]);
                     };
                 } else {
                     var item = document.createElement("div");
@@ -179,11 +259,12 @@ body {
                 if (window["WebSocket"]) {
                     this.conn = new WebSocket("ws://" + document.location.host + "/ws_message?room_id=" + room_id);
                     this.conn.onmessage = function (evt) {
+                        console.log("get message evt" + evt);
+
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
                             that.positions = [];
-                            that.SearchSubStr(messages[i], '&');
-                            //var message_array = messages[i].split('&');
+                            that.searchSubStr(messages[i], '&');
                             var room_id = messages[i].substring(0, that.positions[0]);
                             var create_date = messages[i].substring(that.positions[0]+1, that.positions[1]);
                             var user_id = messages[i].substring(that.positions[1]+1, that.positions[2]);
@@ -200,6 +281,8 @@ body {
                                 create_date: create_date
                             });
                         }
+                        //app.reformRoomUnread(room_id); //reform room_id unread number
+                        app.scrollToEnd(); //scroll to bottom
                     };
                 } else {
                     var item = document.createElement("div");
@@ -215,25 +298,44 @@ body {
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
             },
-            changeRoom: function () {
+            changeRoom: function (index) {
                 this.messages = [];
                 this.websocket_close();
-                this.get_room_messages(this.room_id);
-                this.websocket_start(this.room_id);
+                this.get_room_messages(app.rooms[index].rid);
+                this.websocket_start(app.rooms[index].rid);
+                app.reformActiveRoom(app.rooms[index].rid); //init active room
             },
-            SearchSubStr: function(str,subStr){
+            searchSubStr: function(str,subStr){
                 var pos = str.indexOf(subStr);
                 while(pos>-1){
                     app.positions.push(pos);
                     pos = str.indexOf(subStr,pos+1);
                 }
-                console.log(app.positions);
             },
             scrollToEnd:function(){//滚动到底部
-                //var div = document.getElementById('log');
-               // div.scrollTop = div.scrollHeight;
                 $('#log').animate({scrollTop:$('#log').height() + 99999 + 'px'},100);
-                $("#contentBox").val("");
+                app.content = "";
+            },
+            reformActiveRoom: function(room_id) {
+                if(app.rooms.length>0) {
+                    for(var i=0; i< app.rooms.length; i++) {
+                        if(app.rooms[i].rid==room_id) {
+                            Vue.set(app.rooms[i], 'isActive', true);
+                            //current room unreadnumber==0
+                            Vue.set(app.rooms[i], 'unread', 0);
+                        } else {
+                            Vue.set(app.rooms[i], 'isActive', false);
+                        }
+                    }
+                }
+            },
+            reformRoomUnread: function(room_id) {
+                for(var i=0; i< app.rooms.length; i++) {
+                    if(parseInt(app.rooms[i].rid)==room_id) {
+                        var oldUnreadNumber = app.rooms[i].unread;
+                        Vue.set(app.rooms[i], 'unread', parseInt(oldUnreadNumber) + 1);
+                    }
+                }
             }
         }
     })
