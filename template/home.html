@@ -114,6 +114,12 @@ body {
     vertical-align: top;
     margin-left: 20px;
 }
+#contentBox {
+    width: calc(100% - 300px);
+}
+#submitContent {
+    margin-left: 20px;
+}
 [v-cloak] {
     display: none;
 }
@@ -152,13 +158,8 @@ body {
             </div>
         </div>
         <div id="form">
-            <input type="button" @click="submitContent" value="Submit"/>
-            <input id="contentBox" type="text" name="content" v-model="content" size="64"/>
-            <!--
-            <select name="room" v-model="room_id" @change="changeRoom">
-                <option :value="room.rid" v-for="room in rooms">{{ room.des }}</option>
-            </select>
-            -->
+            <input id="contentBox" type="text" name="content" v-model="content" size="64" @keypress.enter="submitContent"/>
+            <input id="submitContent" type="button" @click="submitContent" value="Submit"/>
         </div>
     </div>
 </body>
