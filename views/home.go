@@ -3,6 +3,7 @@ package views
 import (
 	"net/http"
 	"go_ws/tools"
+	"go_ws/config"
 )
 
 func ServeHome(w http.ResponseWriter, r *http.Request)  {
@@ -15,5 +16,5 @@ func ServeHome(w http.ResponseWriter, r *http.Request)  {
 		http.Redirect(w,r,"/login", http.StatusFound)
 		return
 	}
-	http.ServeFile(w, r, "C:/Users/hao.zhou/go/src/go_ws/template/home.html")
+	http.ServeFile(w, r, config.HOME_TEMPLATE)
 }

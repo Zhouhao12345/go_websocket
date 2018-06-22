@@ -2,8 +2,9 @@ package views
 
 import (
 	"net/http"
+	"go_ws/config"
 )
 
 func ServeLogin(w http.ResponseWriter, r *http.Request)  {
-	http.ServeFile(w, r, "C:/Users/hao.zhou/go/src/go_ws/template/login.html")
+	http.ServeFile(w, r, config.LOGIN_TEMPLATE)
 }
