@@ -37,5 +37,8 @@ func SingleSign(r *http.Request) (signed bool, userId string) {
 	if err != nil {
 		return false, "0"
 	}
-	return true, sessionMap["_auth_user_id"].(string)
+	if user_id, ok := sessionMap["_auth_user_id"].(string); ok {
+		return true, user_id
+	}
+	return false, "0"
 }
