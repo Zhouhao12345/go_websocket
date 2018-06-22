@@ -8,11 +8,13 @@ import (
 	"go_ws/models"
 	"strings"
 	"log"
+	"time"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
+	theatre *Theatre
 	// Registered clients.
 	clients map[*Client]bool
 	room_id string
@@ -26,8 +28,9 @@ type Hub struct {
 	unregister chan *Client
 }
 
-func newHub() *Hub {
+func newHub(theatre *Theatre) *Hub {
 	return &Hub{
+		theatre:theatre,
 		room_id: "None",
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
@@ -47,10 +50,11 @@ func (h *Hub) run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
+			current := time.Now()
 			messageArray := strings.SplitN(string(message), "&", 4)
 			userId := messageArray[0]
 			content := messageArray[3]
-			messageFullByte := []byte(h.room_id+"&"+string(message))
+			messageFullByte := []byte(h.room_id+"&"+current.Format("2006-01-02 15:04:05.000000")+"&"+string(message))
 			m := &models.Models{}
 			err := m.InsertQuery(
 				"INSERT INTO web_chatmessage ( create_uid, create_date, " +
@@ -58,8 +62,9 @@ func (h *Hub) run() {
 					"("+userId+", NOW() + INTERVAL 8 HOUR , "+userId+", " +
 					"NOW() + INTERVAL 8 HOUR, '"+content+"' , 1, "+h.room_id+", "+userId+")")
 			if err != nil {
-				log.Println(err)
+				log.Printf("error: %v", err)
 			}
+			h.theatre.wakeHub <- h
 			for client := range h.clients {
 				select {
 					case client.send <- messageFullByte:

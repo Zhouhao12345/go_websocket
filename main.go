@@ -19,10 +19,14 @@ func main() {
 	go threate.Run()
 	http.HandleFunc("/home", views.ServeHome)
 	http.HandleFunc("/login", views.ServeLogin)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/ws_message", func(w http.ResponseWriter, r *http.Request) {
 		views.Ws(w,r,threate)
 	})
+	http.HandleFunc("/ws_unread", func(w http.ResponseWriter, r *http.Request) {
+		views.RoomWs(w,r,threate)
+	})
 	http.HandleFunc("/api/room/list", views.APIRoom)
+	http.HandleFunc("/api/user", views.APIUser)
 	http.HandleFunc("/api/room/message/list", views.APIMessage)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

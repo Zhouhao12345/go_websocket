@@ -95,18 +95,33 @@ body {
     var app = new Vue({
         el: '#app',
         data: {
+            user: 0,
             room_id: 0,
             rooms: [],
             conn: false,
+            conn_room: false,
             content: "",
             messages: [],
             positions:[],
             username: ""
         },
         created: function() {
+            this.get_user();
             this.get_room_list();
+            this.websocket_unread_start();
         },
         methods: {
+            get_user: function () {
+                var that = this;
+                $.ajax("/api/user", {
+                    data: {},
+                    dataType: 'json',
+                    type: 'GET',
+                    success: function(response) {
+                        that.user = parseInt(response);
+                    }
+                });
+            },
             get_room_list: function () {
                 var that = this;
                 $.ajax("/api/room/list", {
@@ -146,10 +161,23 @@ body {
                     this.conn.close();
                 }
             },
+            websocket_unread_start: function () {
+                if (window["WebSocket"]) {
+                    this.conn_room = new WebSocket("ws://" + document.location.host + "/ws_unread");
+                    this.conn_room.onmessage = function (evt) {
+                        var messages = evt.data.split('\n');
+                        console.log(messages[0]);
+                    };
+                } else {
+                    var item = document.createElement("div");
+                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    this.appendLog(item);
+                }
+            },
             websocket_start: function(room_id){
                 var that = this;
                 if (window["WebSocket"]) {
-                    this.conn = new WebSocket("ws://" + document.location.host + "/ws?room_id=" + room_id);
+                    this.conn = new WebSocket("ws://" + document.location.host + "/ws_message?room_id=" + room_id);
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
                         for (var i = 0; i < messages.length; i++) {
@@ -157,17 +185,19 @@ body {
                             that.SearchSubStr(messages[i], '&');
                             //var message_array = messages[i].split('&');
                             var room_id = messages[i].substring(0, that.positions[0]);
-                            var user_id = messages[i].substring(that.positions[0]+1, that.positions[1]);
-                            var user_name = messages[i].substring(that.positions[1]+1, that.positions[2]);
-                            var image = messages[i].substring(that.positions[2]+1, that.positions[3]);
-                            var content = messages[i].substring(that.positions[3]+1);
+                            var create_date = messages[i].substring(that.positions[0]+1, that.positions[1]);
+                            var user_id = messages[i].substring(that.positions[1]+1, that.positions[2]);
+                            var user_name = messages[i].substring(that.positions[2]+1, that.positions[3]);
+                            var image = messages[i].substring(that.positions[3]+1, that.positions[4] );
+                            var content = messages[i].substring(that.positions[4]+1);
                             that.messages.push({
                                 mid: 0,
                                 content: content,
                                 rid: room_id,
                                 from_uid: user_id,
                                 from_name: user_name,
-                                image: image
+                                image: image,
+                                create_date: create_date
                             });
                         }
                     };
