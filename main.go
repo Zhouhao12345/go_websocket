@@ -23,14 +23,20 @@ func main() {
 	}
 	threate := views.NewTheatre(local)
 	go threate.Run()
+
+	// view
 	http.HandleFunc("/home", views.ServeHome)
 	http.HandleFunc("/login", views.ServeLogin)
+
+	// web socket
 	http.HandleFunc("/ws_message", func(w http.ResponseWriter, r *http.Request) {
 		views.Ws(w,r,threate)
 	})
 	http.HandleFunc("/ws_unread", func(w http.ResponseWriter, r *http.Request) {
 		views.RoomWs(w,r,threate)
 	})
+
+	// api
 	http.HandleFunc("/api/room/list", views.APIRoom)
 	http.HandleFunc("/api/user", views.APIUser)
 	http.HandleFunc("/api/room/message/list", views.APIMessage)
