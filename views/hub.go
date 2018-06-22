@@ -54,7 +54,8 @@ func (h *Hub) run() {
 			messageArray := strings.SplitN(string(message), "&", 4)
 			userId := messageArray[0]
 			content := messageArray[3]
-			messageFullByte := []byte(h.room_id+"&"+current.Format("2006-01-02 15:04:05.000000")+"&"+string(message))
+			messageFullByte := []byte(h.room_id+"&"+
+				current.In(h.theatre.local).Format("2006-01-02 15:04:05.000000")+"&"+string(message))
 			m := &models.Models{}
 			err := m.InsertQuery(
 				"INSERT INTO web_chatmessage ( create_uid, create_date, " +

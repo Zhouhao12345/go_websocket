@@ -9,13 +9,19 @@ import (
 	"net/http"
 	"go_ws/views"
 	"log"
+	"time"
+	"go_ws/config"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
 
 func main() {
 	flag.Parse()
-	threate := views.NewTheatre()
+	local, err1 := time.LoadLocation(config.TIMEZONE)
+	if err1 != nil {
+		log.Fatalln(err1)
+	}
+	threate := views.NewTheatre(local)
 	go threate.Run()
 	http.HandleFunc("/home", views.ServeHome)
 	http.HandleFunc("/login", views.ServeLogin)

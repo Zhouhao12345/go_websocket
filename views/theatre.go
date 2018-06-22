@@ -3,6 +3,7 @@ package views
 import (
 	"go_ws/models"
 	"log"
+	"time"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -21,9 +22,10 @@ type Theatre struct {
 	unregisterMember chan *Member
 
 	wakeHub chan *Hub
+	local *time.Location
 }
 
-func NewTheatre() *Theatre {
+func NewTheatre(local *time.Location) *Theatre {
 	return &Theatre{
 		hubs: make(map[string]*Hub),
 		members: make(map[string]*Member),
@@ -32,6 +34,7 @@ func NewTheatre() *Theatre {
 		registerMember: make(chan *Member),
 		unregisterMember: make(chan *Member),
 		wakeHub: make(chan *Hub),
+		local: local,
 	}
 }
 
