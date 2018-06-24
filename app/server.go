@@ -2,20 +2,20 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package app
 
 import (
 	"flag"
-	"net/http"
-	"go_ws/views"
-	"log"
-	"time"
 	"go_ws/config"
+	"time"
+	"log"
+	"go_ws/views"
+	"net/http"
 )
 
 var addr = flag.String("addr", config.HOSTNAME+":"+config.PORT, "http service address")
 
-func main() {
+func Runserver()  {
 	flag.Parse()
 	local, err1 := time.LoadLocation(config.TIMEZONE)
 	if err1 != nil {
