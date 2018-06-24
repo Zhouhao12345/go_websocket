@@ -13,7 +13,7 @@ import (
 	"go_ws/config"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
+var addr = flag.String("addr", config.HOSTNAME+":"+config.PORT, "http service address")
 
 func main() {
 	flag.Parse()
