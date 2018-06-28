@@ -6,15 +6,52 @@
 <body>
     <div id="app">
         <div>{{ message }}</div>
+        <input name="username" type="text" size="50" v-model="username">
+        <input name="password" type="password" size="50" v-model="password">
+        <input type="button" @click="login" value="Login">
+        <input type="button" @click="register" value="Register">
     </div>
 </body>
+<script src="http://cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script type="text/javascript">
     var app = new Vue({
         el: '#app',
         data: {
             message: 'Please Login!',
+            username: '',
+            password: '',
         },
+        methods: {
+            login: function () {
+                var that = this;
+                $.ajax("/api/login", {
+                    data: {
+                        username:that.username,
+                        password:that.password,
+                    },
+                    dataType: 'json',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+                    }
+                });
+            },
+            register: function () {
+                var that = this;
+                $.ajax("/api/register", {
+                    data: {
+                        username:that.username,
+                        password:that.password,
+                    },
+                    dataType: 'json',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+                    }
+                });
+            }
+        }
     })
 </script>
 </html>

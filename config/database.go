@@ -7,4 +7,5 @@ const (
 	GLOBAL_DB_HOST = "0.0.0.0"
 	GLOBAL_DB_PORT = "3306"
 	GLOBAL_DB_CHARSET = "utf8mb4"
+	ATOMIC_REQUEST = true
 )

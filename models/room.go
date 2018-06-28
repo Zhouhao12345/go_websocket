@@ -8,9 +8,9 @@ import (
 
 type Room struct{
 	gorm.Model
-	slug string `gorm:"NOT NULL;size:255"`
-	desc sql.NullString `gorm:"size:255"`
-	users []*User `gorm:"many2many:user_rooms;"`
-	messages []Message `gorm:"foreignkey:room"`
-	is_active bool
+	Slug *string `gorm:"not null;unique"`
+	Desc sql.NullString `gorm:"size:255"`
+	Users []*User `gorm:"many2many:user_rooms;"`
+	Messages []Message `gorm:"foreignkey:Room"`
+	Is_active bool
 }

@@ -22,8 +22,8 @@ func Migrate()  {
 	}
 	tx := db.Begin()
 	db.AutoMigrate(
-		&models.User{},
 		&models.Message{},
+		&models.User{},
 		&models.Room{},
 	)
 	tx.Commit()

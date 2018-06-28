@@ -11,6 +11,7 @@ import (
 	"log"
 	"go_ws/views"
 	"net/http"
+	"go_ws/middleware"
 )
 
 var addr = flag.String("addr", config.HOSTNAME+":"+config.PORT, "http service address")
@@ -38,6 +39,8 @@ func Runserver()  {
 
 	// api
 	http.HandleFunc("/api/room/list", views.APIRoom)
+	http.HandleFunc("/api/login", middleware.WithDatabaseInit(views.APILogin))
+	http.HandleFunc("/api/register", middleware.WithDatabaseInit(views.APIRegister))
 	http.HandleFunc("/api/user", views.APIUser)
 	http.HandleFunc("/api/room/message/list", views.APIMessage)
 	err := http.ListenAndServe(*addr, nil)
