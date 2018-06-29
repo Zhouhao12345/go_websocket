@@ -1,0 +1,6 @@
+chat_ggac:
+  build: .
+  volumes:
+    - ./config:/go/src/go_ws/config
+  ports:
+    - 8080:8080

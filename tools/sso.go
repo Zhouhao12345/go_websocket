@@ -17,7 +17,7 @@ func SingleSign(r *http.Request) (signed bool, userId string) {
 
 	//todo fixme improve it
 	sessionRow, err := m.SelectQuery(
-		"select session_data from django_session where session_key = '"+sessionId.Value+"'")
+		"select session_data from django_session where session_key = ?", sessionId.Value)
 	if err != nil {
 		return false, "0"
 	}

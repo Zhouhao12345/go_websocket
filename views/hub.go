@@ -8,7 +8,8 @@ import (
 	"go_ws/models"
 	"strings"
 	"log"
-	"time"
+	"go_ws/tools"
+	"strconv"
 )
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -16,16 +17,16 @@ import (
 type Hub struct {
 	theatre *Theatre
 	// Registered clients.
-	clients map[*Client]bool
+	members map[*Member]bool
 	room_id string
 	// Inbound messages from the clients.
 	broadcast chan []byte
 
 	// Register requests from the clients.
-	register chan *Client
+	register chan *Member
 
 	// Unregister requests from clients.
-	unregister chan *Client
+	unregister chan *Member
 }
 
 func newHub(theatre *Theatre) *Hub {
@@ -33,55 +34,53 @@ func newHub(theatre *Theatre) *Hub {
 		theatre:theatre,
 		room_id: "None",
 		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[*Client]bool),
+		register:   make(chan *Member),
+		unregister: make(chan *Member),
+		members:    make(map[*Member]bool),
 	}
 }
 
 func (h *Hub) run() {
 	for {
 		select {
-		case client := <-h.register:
-			h.clients[client] = true
-		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
+		case member := <-h.register:
+			h.members[member] = true
+		case member := <-h.unregister:
+			if _, ok := h.members[member]; ok {
+				delete(h.members, member)
 			}
 		case message := <-h.broadcast:
-			current := time.Now()
-			current_time := current.In(h.theatre.local).Format("2006-01-02 15:04:05")
+			current_time := tools.Now().Format("2006-01-02 15:04:05")
 			messageArray := strings.SplitN(string(message), "&", 4)
 			userId := messageArray[0]
 			content := messageArray[3]
-			messageFullByte := []byte(h.room_id+"&"+ current_time+"&"+string(message))
 			m := &models.Models{}
 
 			// todo fixme unread should in improve
 			var unread string
-			if len(h.clients) > 1 {
+			if len(h.members) > 1 {
 				unread = "0"
 			} else {
 				unread = "1"
 			}
 
-			err := m.InsertQuery(
+			id, err := m.InsertQuery(
 				"INSERT INTO web_chatmessage ( create_uid, create_date, " +
 					"update_uid, update_date, content, unread, room_id, user_id ) VALUES" +
 					"(?, ?, ?, ?, ?, ?, ?, ?)",
-					userId, current_time , userId, current_time ,content, unread, h.room_id, userId)
+				userId, current_time , userId, current_time ,tools.RemoveHtmlTags(content), unread, h.room_id, userId)
+			messageFullByte := []byte(strconv.FormatInt(id, 10)+"&"+h.room_id+"&"+ current_time+"&"+string(message))
 			if err != nil {
 				log.Printf("error: %v", err)
 			}
 			h.theatre.wakeHub <- h
-			for client := range h.clients {
+			for member := range h.members {
 				select {
-					case client.send <- messageFullByte:
-					default:
-						close(client.send)
-						delete(h.clients, client)
-					}
+				case member.send <- messageFullByte:
+				default:
+					close(member.send)
+					delete(h.members, member)
+				}
 			}
 		}
 	}

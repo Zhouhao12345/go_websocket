@@ -1,11 +1,9 @@
 package config
 
 const (
-	GLOBAL_DB_NAME = "go_chat"
+	GLOBAL_DB_NAME = "ggac"
 	GLOBAL_DB_USERNAME = "root"
 	GLOBAL_DB_PASSWORD = "Hello.123"
-	GLOBAL_DB_HOST = "0.0.0.0"
-	GLOBAL_DB_PORT = "3306"
-	GLOBAL_DB_CHARSET = "utf8mb4"
-	ATOMIC_REQUEST = true
+	GLOBAL_DB_HOST = "192.168.64.146"
+	GLOBAL_DB_PORT = "3328"
 )

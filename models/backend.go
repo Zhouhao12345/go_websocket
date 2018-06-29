@@ -28,13 +28,13 @@ func dbInit() (*sql.DB, error){
 }
 
 
-func (m *Models) SelectQuery(stringQuery string) ([]map[string]string, error) {
+func (m *Models) SelectQuery(stringQuery string, args ...interface{}) ([]map[string]string, error) {
 	var valueList []map[string]string
 	db, err := dbInit()
 	if err != nil {
 		return valueList, err
 	}
-	rows, err := db.Query(stringQuery)
+	rows, err := db.Query(stringQuery, args...)
 	if err != nil {
 		return valueList, err
 	}
@@ -72,20 +72,27 @@ func (m *Models) SelectQuery(stringQuery string) ([]map[string]string, error) {
 	return valueList, nil
 }
 
-func (m *Models) InsertQuery(stringQuery string, args ...interface{}) (error) {
+func (m *Models) InsertQuery(stringQuery string, args ...interface{}) (int64, error) {
 	db, err := dbInit()
 	if err != nil {
-		return err
+		return 0,err
 	}
 	tx,_ := db.Begin()
 	stmtIns, err := db.Prepare(stringQuery)
 	if err != nil {
-		return err
+		return 0,err
 	}
-	stmtIns.Exec(args...)
+	result, err := stmtIns.Exec(args...)
+	if err != nil {
+		return 0,err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0,err
+	}
 	tx.Commit()
 	db.Close()
-	return nil
+	return id, nil
 }
 
 func (m *Models) UpdateQuery(stringQuery string, args ...interface{}) (error) {

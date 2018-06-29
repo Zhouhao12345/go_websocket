@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <title>Chat Example</title>
+<link rel="stylesheet" type="text/css" href="http://pre-cdn.ggac.net/lib/css/toastr-2.1.3.min.css">
 <style type="text/css">
 html {
     overflow: hidden;
@@ -14,27 +15,98 @@ body {
     width: 100%;
     height: 100%;
     background: gray;
+    font-size: 0;
+    line-height: 1;
 }
-#roomList {
+.font-size12 {
+    font-size: 12px;
+}
+.font-size14 {
+    font-size: 14px;
+}
+.font-size16 {
+    font-size: 16px;
+}
+#searchBox {
     background: #fff;
     position: absolute;
-    width: 6em;
-    top: 0.5em;
-    left: 0.5em;
-    right: 0.5em;
-    bottom: 0.5em;
+    width: 160px;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    height: 60px;
+    overflow: hidden;
+}
+.search-input {
+    position: relative;
+    margin-bottom: 10px;
+}
+.search-input input {
+    width: 100%;
+    padding: 4px 10px;
+}
+.search-icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: inline-block;
+    background-color: #4fe2fe;
+    width: 27px;
+    height: 27px;
+    cursor: pointer;
+}
+.search-icon img {
+    margin-top: 4px;
+    margin-left: 4px;
+}
+.switch-condition {
+    text-align: center;
+}
+.switch-condition a:first-child {
+    margin-right: 20px;
+}
+.room-contact {
+    position: relative;
+}
+.roomlist-unread-count{
+    position: absolute;
+    right: -4px;
+    top: -4px;
+    display: inline-block;
+    background-color: #f56c6c;
+    border-radius: 2px;
+    color: #fff;
+    padding: 2px;
+}
+#roomList,
+#focusList{
+    background: #fff;
+    position: absolute;
+    width: 160px;
+    top: 70px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
     overflow: auto;
 }
 .room-box {
     position: relative;
     background: #c8c8c8;
-    text-align: center;
+    text-align: left;
     color: #fff;
     border-bottom: 1px solid #808080;
-    padding: 0.5em;
+    padding: 8px;
 }
 .room-box.is-active {
     background: #4fe2fe;
+}
+.room-box .r-desc{
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 70px;
+    height: 16px;
 }
 .r-badge {
     position: absolute;
@@ -47,26 +119,81 @@ body {
     right: 0;
     top: 0;
 }
+.r-date {
+    position: absolute;
+    display: inline-block;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    right: 0;
+    top: 10px;
+}
+.r-remove {
+    position: absolute;
+    display: inline-block;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    left: 0;
+    top: 0;
+}
+
+#logTitle {
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 8px;
+    left: 180px;
+    right: 8px;
+    height: 30px;
+    line-height: 30px;
+    overflow: hidden;
+}
+#logTitle .info-delete{
+    position: absolute;
+    right: 10px;
+    top: 0;
+    cursor: pointer;
+}
+.title-info {
+    position: relative;
+    padding: 0 10px;
+    height: 30px;
+}
 #log {
     background: #fff;
     margin: 0;
-    padding: 0.5em 0.5em 0.5em 0.5em;
+    padding: 8px;
     position: absolute;
-    top: 0.5em;
-    left: 7em;
-    right: 0.5em;
-    bottom: 3.5em;
+    top: 39px;
+    left: 180px;
+    right: 8px;
+    bottom: 70px;
+    overflow: auto;
+}
+#focusDetail {
+    background: #fff;
+    margin: 0;
+    padding: 8px;
+    position: absolute;
+    top: 10px;
+    left: 180px;
+    right: 8px;
+    bottom: 10px;
     overflow: auto;
 }
 
 #form {
-    padding: 0.5em;
+    padding: 8px;
     background: #fff;
     margin: 0;
     position: absolute;
-    bottom: 0.5em;
-    left: 7em;
-    width: 100%;
+    bottom: 8px;
+    left: 180px;
+    width: calc(100% - 205px);
     overflow: hidden;
 }
 .other-box,
@@ -104,6 +231,15 @@ body {
 .self-box .content-body {
     text-align: left;
 }
+.date-box {
+    text-align: center;
+}
+.date-box span {
+    display: inline-block;
+    background-color: #4f4f4f;
+    color: #fff;
+    padding: 10px;
+}
 .content-time {
     display: inline-block;
     width: auto;
@@ -115,97 +251,308 @@ body {
     margin-left: 20px;
 }
 #contentBox {
+    display: inline-block;
+    border: 1px solid #ccc;
+    white-space: nowrap;
+    overflow: hidden;
     width: calc(100% - 300px);
+    padding: 10px;
 }
 #submitContent {
     margin-left: 20px;
+    vertical-align: top;
+    margin-top: 6px;
+}
+.sidebar-avatar-box,
+.sidebar-content-box {
+    display: inline-block;
+    vertical-align: top;
+}
+.sidebar-avatar-box {
+    width: 40px;
+    height: 40px;
+}
+.sidebar-content-box {
+    margin-left: 5px;
+    width: calc(100% - 45px);
+}
+.sidebar-avatar-box img {
+    width: 100%;
+    vertical-align: top;
+}
+.r-content-top {
+    margin-bottom: 10px;
+}
+.r-latest-bottom {
+    width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.choose-img-btn {
+    margin-left: 20px;
+    vertical-align: top;
+    margin-top: 5px;
 }
 [v-cloak] {
     display: none;
+}
+.toast-message {
+    font-size: 14px;
 }
 </style>
 </head>
 <body>
     <div id="app" v-cloak>
-        <div id="roomList">
+        <div id="searchBox">
+            <div class="search-input">
+                <input type="text" name="search" v-model="search_data" placeholder="搜索">
+                <span class="search-icon" @click="submitSearch"><img src="http://cdn.ggac.net/images/seacher_icon.png"></span>
+            </div>
+            <div class="switch-condition">
+                <a href="javascript:;" class="room-contact font-size12" @click="get_room_list(false,search_data)">联系人<span class="roomlist-unread-count font-size12" v-if="room_list_unread_count>0">{{ room_list_unread_count }}</span></a>
+                <a href="javascript:;" class="font-size12" @click="get_user_focus_list()">关注人</a>
+            </div>
+        </div>
+        <div id="roomList" v-show="navbar_type=='room_list'">
             <template v-for="(r, index) in rooms">
-                <div class="room-box" :class="{'is-active' : r.isActive}"  @click="changeRoom(index)">
-                    <span class="r-desc">{{r.des}}</span>
-                    <span class="r-badge">{{r.unread}}</span>
+                <div class="room-box" :class="{'is-active' : r.isActive}"  @click="changeRoom(r.rid)">
+                    <div class="sidebar-avatar-box">
+                        <img :src="image_prefix + r.images" class="user-avatar"/>
+                    </div>
+                    <div class="sidebar-content-box">
+                        <div class="r-content-top">
+                            <span class="font-size14 r-desc">{{ r.des }}</span>
+                            <span class="font-size14 r-date" >{{ r.create_date.split('.')[0].substring(11, 16) }}</span>
+                        </div>
+                        <div class="font-size14 r-latest-bottom" v-html="r.content"></div>
+                        <span class="font-size14 r-badge" v-if="r.unread>0">{{ r.unread }}</span>
+                        <span class="font-size14 r-remove" @click.stop="deleteRoom(r.rid)">X</span>
+                    </div>
                 </div>
             </template>
         </div>
-        <div id="log">
-            <div v-for="message in messages">
-                <div class="self-box" v-if="user==parseInt(message.from_uid)">
-                    <span class="content-time">{{ message.create_date.split('.')[0] }}</span>
-                    <span class="content-body">{{ message.content }}</span>
-                    <span class="content-header">
-                        <img :src="image_prefix + message.image" class="user-avatar"/>
-                    <span>{{message.from_name}}</span>
-                    </span>
+        <div v-show="navbar_type=='room_list'">
+            <div id="logTitle">
+                <div class="title-info">
+                    <span class="info-name font-size14">{{ current_room.des }}</span>
+                    <span class="info-delete font-size14">X</span>
                 </div>
-                <div class="other-box" v-else>
-                    <span class="content-header">
-                        <img :src="image_prefix + message.image" class="user-avatar"/>
-                        <span>{{message.from_name}}</span>
-                    </span>
-                    <span class="content-body">{{ message.content }}</span>
-                    <span class="content-time">{{ message.create_date.split('.')[0] }}</span>
+            </div>
+            <div id="log">
+                <div v-for="message in messages">
+                    <template v-if="message.hasOwnProperty('isDate')">
+                        <div class="date-box">
+                            <span class="font-size14">{{ message.create_date }}</span>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="self-box" v-if="user==parseInt(message.from_uid)">
+                            <span class="font-size14 content-time">{{ message.create_date.split('.')[0] }}</span>
+                                <span class="font-size14 content-body" v-html="message.content"></span>
+                            <span class="content-header">
+                                <img :src="image_prefix + message.image" class="user-avatar"/>
+                            <span class="font-size14">{{message.from_name}}</span>
+                            </span>
+                        </div>
+                        <div class="other-box" v-else>
+                            <span class="content-header">
+                                <img :src="image_prefix + message.image" class="user-avatar"/>
+                            <span class="font-size14">{{message.from_name}}</span>
+                            </span>
+                                <span class="font-size14 content-body" v-html="message.content"></span>
+                            <span class="font-size14 content-time">{{ message.create_date.split('.')[0] }}</span>
+                        </div>
+                    </template>
+
                 </div>
-
-
+            </div>
+            <div id="form" v-if="has_connected" style="display: inline-block;">
+                <div class="emoji-container" style="min-height: 30px;display: none;">
+                    <span class="dismiss-emoji font-size12" onclick="dismissContainer()">X</span>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                        <tr v-for="(rows, r_index) in emojiss">
+                            <td v-for="(col, c_index) in rows">
+                                <div class="emojis-item">
+                                    <img :src="'http://pre-cdn.ggac.net/images/arclist/' + col + '.gif'" onclick="chatInertEmoji(event)" :_img_number="col">
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="contentBox" name="saytext" class="font-size14" contentEditable="plaintext-only" @keypress.enter="submitContent"></div>
+                <img class="choose-img-btn" src="http://pre-cdn.ggac.net/images/fourm_face.png" onclick="chatChooseEmoji(event)">
+                <!--<input id="contentBox" type="text" name="content" v-model="content" size="64" @keypress.enter="submitContent"/>-->
+                <input id="submitContent" type="button" @click="submitContent" value="Submit"/>
             </div>
         </div>
-        <div id="form">
-            <input id="contentBox" type="text" name="content" v-model="content" size="64" @keypress.enter="submitContent"/>
-            <input id="submitContent" type="button" @click="submitContent" value="Submit"/>
+        <div id="focusList" v-show="navbar_type=='focus_list'">
+            <template v-for="(r, index) in user_focus">
+                <div class="room-box" :class="{'is-active' : r.id==current_user_focus.id}" @click="changeUserFocus(r)">
+                    <div class="sidebar-avatar-box">
+                        <img :src="image_prefix + r.avatar_image" class="user-avatar"/>
+                    </div>
+                    <div class="sidebar-content-box">
+                        <div class="r-content-top">
+                        <span class="font-size14 r-desc">{{ r.username }}</span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <div id="focusDetail" v-show="navbar_type=='focus_list'">
+            <div class="font-size14">{{current_user_focus.username}}关注人详情</div>
+            <div class="operate-box">
+                <a href="javascript:;" class="font-size14" @click="sendUserFocus">发信息</a>
+            </div>
         </div>
     </div>
 </body>
-<script src="http://cdn.staticfile.org/jquery/2.1.0/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/jquery-3.3.1.min.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/vue-2.5.13.min.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/toastr-2.1.3.min.js"></script>
+
 <script type="text/javascript">
+    function jsonToObj(str) {
+        var obj = JSON.parse(str);
+        return obj;
+    }
+
+    function objToJson(obj) {
+        var str = JSON.stringify(obj);
+        return str;
+    }
+    function chatChooseEmoji() {
+        $(".emoji-container").css({'display' : 'inline-block'});
+    }
+    function dismissContainer() {
+        $(".emoji-container").css({'display' : 'none'});
+    }
+    function chatInertEmoji(e) {
+        var event = window.event || e;
+        var event_target = event.srcElement ? event.srcElement : event.target;
+        var emoji_src = $(event_target).attr('src');
+        $("#contentBox").append("<img src='" + emoji_src + "' model_id='0' class='topic-emojis'>");
+    }
+    var emojis = new Array();
+    var max_length = 1;
+    for(var i=0; i<5; i++) {
+        emojis[i] = new Array();
+        for(var j=0; j<15; j++) {
+            emojis[i][j] = max_length;
+            max_length++;
+        }
+    }
     var app = new Vue({
         el: '#app',
         data: {
             user: 0,
             room_id: 0,
+            current_room_id: 0,
+            current_room: {},
             rooms: [],
             conn: false,
-            conn_room: false,
-            content: "",
+            has_connected: false,
             messages: [],
             positions:[],
             username: "",
-            image_prefix: "http://cdn.ggac.net/"
+            emojiss: emojis,
+            image_prefix: "http://cdn.ggac.net/",
+            search_data: "",
+            user_focus: [],
+            current_user_focus: {},
+            navbar_type: 'room_list',
+            room_list_unread_count: 0
         },
         created: function() {
-            this.get_room_list();
-            this.websocket_unread_start();
+            this.get_room_list(true,this.search_data);
+            this.websocket_start();
         },
         methods: {
-            get_user: function () {
+            // get_user: function () {
+            //     var that = this;
+            //     $.ajax("/api/user", {
+            //         data: {},
+            //         dataType: 'json',
+            //         type: 'GET',
+            //         success: function(response) {
+            //             that.user = parseInt(response);
+            //         }
+            //     });
+            // },
+            get_room_list: function (is_init,value) {
+                console.log(this.navbar_type);
                 var that = this;
-                $.ajax("/api/user", {
-                    data: {},
+                this.search_data = is_init ? "" : this.search_data;
+                that.navbar_type = "room_list";
+                $.ajax("/api/room/list", {
+                    data: {
+                        key: value
+                    },
                     dataType: 'json',
                     type: 'GET',
                     success: function(response) {
-                        that.user = parseInt(response);
+                        that.rooms = response===null ? [] : response;
+                        if(that.rooms.length>0 && is_init) {
+                            that.current_room_id = that.current_room_id>0 ? that.current_room_id : that.rooms[0].rid;
+                            if(app.getQueryString("room_id")!=-1){
+                                /*url room id*/
+                                that.current_room_id = app.getQueryString("room_id");
+                            }
+                            that.changeRoom(that.current_room_id);
+                            that.initRoomItemContent();
+                        }
+                        that.calc_roomlist_unread_count();
                     }
                 });
             },
-            get_room_list: function () {
+            get_user_focus_list: function(value) {
+
                 var that = this;
-                $.ajax("/api/room/list", {
-                    data: {},
+                this.search_data = "";
+                that.navbar_type = "focus_list";
+                console.log(this.navbar_type);
+                $.ajax("/api/user/focused/list", {
+                    data: {
+                        key: value
+                    },
                     dataType: 'json',
                     type: 'GET',
                     success: function(response) {
-                        that.rooms = response;
-                        that.changeRoom(0);
-                        that.get_user();
+                        that.user_focus = response===null ? [] : response;
+                        console.log(that.user_focus);
+                        if(that.user_focus.length>0) {
+                            that.current_user_focus = that.user_focus[0];
+                        }
+                    }
+                });
+            },
+            changeUserFocus: function(focusUser) {
+                app.current_user_focus = focusUser;
+            },
+            calc_roomlist_unread_count: function() {
+                app.room_list_unread_count = 0;
+                for(var i=0; i<app.rooms.length; i++) {
+                    var unread_num = parseInt(app.rooms[i].unread);
+                    if(unread_num>0) {
+                        app.room_list_unread_count += unread_num;
+                    }
+                }
+            },
+            sendUserFocus: function() {
+                var that = this;
+                console.log("focusUser id: " + that.current_user_focus.id);
+                $.ajax("/api/room/create", {
+                    data: {
+                        user_ids: [that.current_user_focus.id]
+                    },
+                    dataType: 'json',
+                    type: 'POST',
+                    success: function(response) {
+                        console.log(response);
+                        location.href = "?room_id=" + response.rid;
                     }
                 });
             },
@@ -228,67 +575,150 @@ body {
                     }
                 });
             },
+            submitSearch: function() {
+                if(this.navbar_type=='room_list') {
+                    this.get_room_list(false,this.search_data);
+                } else {
+                    this.get_user_focus_list(this.search_data);
+                }
+
+            },
             submitContent: function(){
-                if(this.content.replace(/(^\s*)|(\s*$)/g, "")=="") {
-                    alert("请输入数据");
+                if($("#contentBox").html().replace(/(^\s*)|(\s*$)/g, "")=="") {
+                    toastr.warning("请输入数据");
                     return;
                 }
-                this.conn.send(this.content);
+                var reg = /[!！@#$%^*]/g;
+                if(reg.test($("#contentBox").html())){
+                    toastr.warning('输入内容不能包含特殊字符！');
+                    return;
+                }
+                var imgLen = $("#contentBox").html().match(/<img[^>]+>/g);
+                if(imgLen != null){
+                    if(imgLen.length >10 ){
+                        toastr.warning("上传表情不能超过10个！");
+                        return false;
+                    }
+                }
+                var content = $("#contentBox").html().replace(/<[^>]+>/g,"");//去掉所有的html标记
+                if(content.length>400) {
+                    toastr.warning('输入内容不能查超出400字符！');
+                    return;
+                }
+                app.submitCommand({method: 'send_message', data: $("#contentBox").html()});
                 app.scrollToEnd();
             },
-            websocket_close: function(){
-                if(this.conn) {
-                    this.conn.close();
+            submitCommand: function(msg) {
+                console.log(msg);
+                if (this.conn.readyState===1) {
+                    this.conn.send(objToJson(msg));
                 }
-            },
-            websocket_unread_start: function () {
-                if (window["WebSocket"]) {
-                    this.conn_room = new WebSocket("ws://" + document.location.host + "/ws_unread");
-                    this.conn_room.onmessage = function (evt) {
-                        var messages = evt.data.split('\n');
-                        console.log("recive room id:" + messages[0]);
-                        app.reformRoomUnread(messages[0]);
-                    };
-                } else {
-                    var item = document.createElement("div");
-                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
-                    this.appendLog(item);
-                }
-            },
-            websocket_start: function(room_id){
-                var that = this;
-                if (window["WebSocket"]) {
-                    this.conn = new WebSocket("ws://" + document.location.host + "/ws_message?room_id=" + room_id);
-                    this.conn.onmessage = function (evt) {
-                        console.log("get message evt" + evt);
 
+            },
+            deleteRoom: function(room_id) {
+                if (this.conn.readyState===1) {
+                        var msg = {
+                                    method: 'delete_room',
+                                    data:{
+                                        room_id: room_id
+                                    }
+                                  };
+                        console.log(msg);
+                    this.conn.send(objToJson(msg));
+                }
+            },
+            websocket_start: function () {
+                if (window["WebSocket"]) {
+                    var that = this;
+                    this.conn = new WebSocket("ws://" + document.location.host + "/ws");
+                    this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
-                        for (var i = 0; i < messages.length; i++) {
-                            that.positions = [];
-                            that.searchSubStr(messages[i], '&');
-                            var room_id = messages[i].substring(0, that.positions[0]);
-                            var create_date = messages[i].substring(that.positions[0]+1, that.positions[1]);
-                            var user_id = messages[i].substring(that.positions[1]+1, that.positions[2]);
-                            var user_name = messages[i].substring(that.positions[2]+1, that.positions[3]);
-                            var image = messages[i].substring(that.positions[3]+1, that.positions[4] );
-                            var content = messages[i].substring(that.positions[4]+1);
-                            that.messages.push({
-                                mid: 0,
-                                content: content,
-                                rid: room_id,
-                                from_uid: user_id,
-                                from_name: user_name,
-                                image: image,
-                                create_date: create_date
-                            });
+                        console.log("receive:" + messages[0]);
+                        var msg = jsonToObj(messages[0]);
+                        switch (msg.method) {
+                            case 'test_connect':
+                                that.handleTestConnect(msg);
+                                break;
+                            case 'message_send':
+                                that.handleSendMessage(msg);
+                                break;
+                            case 'room_created':
+                                that.handleCreateRoom(msg);
+                                break;
+                            case 'unread_room':
+                                that.handleUnreadRoom(msg);
+                                break;
+                            case 'room_deleted':
+                                that.handleRoomDelete(msg);
+                                break;
+                            default:break;
                         }
-                        //app.reformRoomUnread(room_id); //reform room_id unread number
-                        app.scrollToEnd(); //scroll to bottom
+                    };
+
+                    this.conn.onopen = function () {
+                        console.log("socket has been opened");
+                        var message = {
+                            method: "test_connect",
+                            data:"200"
+                        };
+                        that.conn.send(objToJson(message));
                     };
                 } else {
                     var item = document.createElement("div");
-                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    item.innerHTML = "<b class='font-size12'>Your browser does not support WebSockets.</b>";
                     this.appendLog(item);
+                }
+            },
+            handleTestConnect: function(msg) {
+                app.has_connected = true;
+                app.user = parseInt(msg.data[0]);
+            },
+            handleSendMessage:function(msg) {
+                /*添加时间提示*/
+                // if(1) {
+                //     var dateinfo = {
+                //                         "isDate": true,
+                //                         "create_date": msg.data[0].create_date,
+                //     };
+                //     this.messages.push(dateinfo);
+                // }
+                this.messages.push(msg.data[0]);
+                this.calc_roomlist_unread_count();
+                this.reformRoomUnread(msg.data[0], true);
+                dismissContainer();
+                app.scrollToEnd(); //scroll to bottom
+            },
+            handleCreateRoom:function(msg) {
+                //不在roomsm内，push(msg)
+                console.log(msg);
+                if(!app.hasRoom(msg.data[0].rid)) {
+                    msg.data[0].unread = 0;
+                    app.rooms.push(msg.data[0]);
+                }
+            },
+            handleUnreadRoom:function(msg) {
+                this.reformRoomUnread(msg.data[0], false);
+                this.calc_roomlist_unread_count();
+            },
+            handleRoomDelete:function(msg) {
+                console.log(msg.data[0]);
+                //2、不是当前room直接删除
+                app.deleteCurrentRoom(msg.data[0].room_id);
+                app.calc_roomlist_unread_count();
+                if(app.current_room_id==parseInt(msg.data[0].room_id)) {
+                    //1、是当前room删除, 还有房间则切换第一个；没有房间不切换
+                    //app.deleteRoom(msg.data[0].room_id);
+                    if(app.rooms.length>0) {
+                        //还有房间则切换第一个
+                        app.current_room_id = app.rooms[0].rid;
+                        //拉取当前room数据msg
+                        app.changeRoom(app.current_room_id);
+                        app.reformActiveRoom(app.rooms[0].rid);
+                    } else {
+                        //没有房间不切换
+                        app.current_room_id = 0;
+                        app.messages = [];
+                    }
                 }
             },
             appendLog: function(item) {
@@ -299,12 +729,19 @@ body {
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
             },
-            changeRoom: function (index) {
+            changeRoom: function (room_id) {
                 this.messages = [];
-                this.websocket_close();
-                this.get_room_messages(app.rooms[index].rid);
-                this.websocket_start(app.rooms[index].rid);
-                app.reformActiveRoom(app.rooms[index].rid); //init active room
+                if(app.rooms.length>0) {
+                    this.get_room_messages(room_id);
+                    this.submitCommand({
+                                            method: 'enter_room',
+                                            data:{
+                                                room_id: room_id
+                                            }
+                                        });
+                    app.reformActiveRoom(room_id); //init active room
+                }
+
             },
             searchSubStr: function(str,subStr){
                 var pos = str.indexOf(subStr);
@@ -315,28 +752,65 @@ body {
             },
             scrollToEnd:function(){//滚动到底部
                 $('#log').animate({scrollTop:$('#log').height() + 99999 + 'px'},100);
-                app.content = "";
+                $("#contentBox").html("");
             },
             reformActiveRoom: function(room_id) {
                 if(app.rooms.length>0) {
                     for(var i=0; i< app.rooms.length; i++) {
-                        if(app.rooms[i].rid==room_id) {
+                        if(parseInt(app.rooms[i].rid)==room_id) {
                             Vue.set(app.rooms[i], 'isActive', true);
-                            //current room unreadnumber==0
+                            app.current_room_id = room_id;
                             Vue.set(app.rooms[i], 'unread', 0);
+                            app.current_room = app.rooms[i];
                         } else {
                             Vue.set(app.rooms[i], 'isActive', false);
                         }
                     }
+                    app.calc_roomlist_unread_count();
                 }
             },
-            reformRoomUnread: function(room_id) {
+            reformRoomUnread: function(msg, isActive) {
+
                 for(var i=0; i< app.rooms.length; i++) {
-                    if(parseInt(app.rooms[i].rid)==room_id) {
-                        var oldUnreadNumber = app.rooms[i].unread;
-                        Vue.set(app.rooms[i], 'unread', parseInt(oldUnreadNumber) + 1);
+                    if(parseInt(app.rooms[i].rid)==msg.rid) {
+                        if(!isActive) {
+                            //不是当前房间更新未读数
+                            var oldUnreadNumber = app.rooms[i].unread;
+                            Vue.set(app.rooms[i], 'unread', parseInt(oldUnreadNumber) + 1);
+                        }
+                        Vue.set(app.rooms[i], 'content', msg.content.replace(/<img(.*?)>/g, "[图片]"));
+                        Vue.set(app.rooms[i], 'create_date', msg.create_date);
+                        return;
                     }
                 }
+            },
+            hasRoom: function(room_id) {
+                var flag = false;
+                for(var i=0; i< app.rooms.length; i++) {
+                    if(parseInt(app.rooms[i].rid)==room_id) {
+                        flag = true;
+                        break;
+                    }
+                }
+                return flag;
+            },
+            deleteCurrentRoom: function(room_id) {
+                for(var i=0; i< app.rooms.length; i++) {
+                    if(parseInt(app.rooms[i].rid)==room_id) {
+                        app.rooms.splice(i, 1);
+                    }
+                }
+            },
+            initRoomItemContent: function() {
+                for(var i=0; i< app.rooms.length; i++) {
+                    Vue.set(app.rooms[i], 'content', app.rooms[i].content.replace(/<img(.*?)>/g, "[图片]"));
+                }
+            },
+            getQueryString: function(name) {
+                /*get url param*/
+                var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+                var r = window.location.search.substr(1).match(reg);
+                if (r != null) return unescape(r[2]); return -1;
             }
         }
     })

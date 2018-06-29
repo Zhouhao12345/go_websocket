@@ -29,7 +29,7 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 			"from web_chatmessage as message " +
 			"inner join auth_user as user on user.id = message.user_id and user.is_active = 1 " +
 			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id" +
-			" where message.room_id = " + room + " order by message.create_date")
+			" where message.room_id = ? order by message.create_date", room)
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -44,6 +44,8 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messageRows)
+	encoder := json.NewEncoder(w)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(messageRows)
 	return
 }
