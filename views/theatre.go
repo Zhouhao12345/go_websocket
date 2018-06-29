@@ -66,21 +66,21 @@ func (t *Theatre) Run() {
 					"select ggacuser_id from web_chatroom_users " +
 						"where chatroom_id = ?", room_id_str)
 				if err != nil {
-					log.Fatalln(err)
+					log.Printf("error: %v", err)
 				}
 				// delete room
 				err2 := m.DeleteQuery(
 					"delete from web_chatmessage where room_id = ?", room_id_str)
 				if err2 != nil {
-					log.Println(err2)
+					log.Printf("error: %v", err2)
 				}
 				err3 := m.DeleteQuery("delete from web_chatroom_users where chatroom_id = ?", room_id_str)
 				if err3 != nil {
-					log.Println(err3)
+					log.Printf("error: %v", err3)
 				}
 				err4 := m.DeleteQuery("delete from web_chatroom where id = ?", room_id_str)
 				if err4 != nil {
-					log.Println(err4)
+					log.Printf("error: %v", err4)
 				}
 				for _,user := range userRaws {
 					user_id := user["ggacuser_id"]

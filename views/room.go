@@ -42,7 +42,7 @@ func APIRoom(w http.ResponseWriter, r *http.Request) {
 			"select message.content, message.create_date from web_chatmessage as message " +
 				"where message.room_id = ? order by create_date desc limit 1", room["rid"])
 		if err != nil {
-			log.Println(err)
+			log.Printf("error: %v", err)
 		}
 
 		if len(messageRows) > 0 {

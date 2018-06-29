@@ -1,0 +1,296 @@
+html {
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    background: gray;
+    font-size: 0;
+    line-height: 1;
+}
+.font-size12 {
+    font-size: 12px;
+}
+.font-size14 {
+    font-size: 14px;
+}
+.font-size16 {
+    font-size: 16px;
+}
+#searchBox {
+    background: #fff;
+    position: absolute;
+    width: 160px;
+    top: 10px;
+    left: 8px;
+    right: 8px;
+    height: 60px;
+    overflow: hidden;
+}
+.search-input {
+    position: relative;
+    margin-bottom: 10px;
+}
+.search-input input {
+    width: 100%;
+    padding: 4px 10px;
+}
+.search-icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    display: inline-block;
+    background-color: #4fe2fe;
+    width: 27px;
+    height: 27px;
+    cursor: pointer;
+}
+.search-icon img {
+    margin-top: 4px;
+    margin-left: 4px;
+}
+.switch-condition {
+    text-align: center;
+}
+.switch-condition a:first-child {
+    margin-right: 20px;
+}
+.room-contact {
+    position: relative;
+}
+.roomlist-unread-count{
+    position: absolute;
+    right: -4px;
+    top: -4px;
+    display: inline-block;
+    background-color: #f56c6c;
+    border-radius: 2px;
+    color: #fff;
+    padding: 2px;
+}
+#roomList,
+#focusList{
+    background: #fff;
+    position: absolute;
+    width: 160px;
+    top: 70px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    overflow: auto;
+}
+.room-box {
+    position: relative;
+    background: #c8c8c8;
+    text-align: left;
+    color: #fff;
+    border-bottom: 1px solid #808080;
+    padding: 8px;
+}
+.room-box.is-active {
+    background: #4fe2fe;
+}
+.room-box .r-desc{
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 70px;
+    height: 16px;
+}
+.r-badge {
+    position: absolute;
+    display: inline-block;
+    background: #f56c6c;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    right: 0;
+    top: 0;
+}
+.r-date {
+    position: absolute;
+    display: inline-block;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    right: 0;
+    top: 10px;
+}
+.r-remove {
+    position: absolute;
+    display: inline-block;
+    padding: 0 4px;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    left: 0;
+    top: 0;
+}
+
+#logTitle {
+    background: #fff;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 8px;
+    left: 180px;
+    right: 8px;
+    height: 30px;
+    line-height: 30px;
+    overflow: hidden;
+}
+#logTitle .info-delete{
+    position: absolute;
+    right: 10px;
+    top: 0;
+    cursor: pointer;
+}
+.title-info {
+    position: relative;
+    padding: 0 10px;
+    height: 30px;
+}
+#log {
+    background: #fff;
+    margin: 0;
+    padding: 8px;
+    position: absolute;
+    top: 39px;
+    left: 180px;
+    right: 8px;
+    bottom: 70px;
+    overflow: auto;
+}
+#focusDetail {
+    background: #fff;
+    margin: 0;
+    padding: 8px;
+    position: absolute;
+    top: 10px;
+    left: 180px;
+    right: 8px;
+    bottom: 10px;
+    overflow: auto;
+}
+
+#form {
+    padding: 8px;
+    background: #fff;
+    margin: 0;
+    position: absolute;
+    bottom: 8px;
+    left: 180px;
+    width: calc(100% - 205px);
+    overflow: hidden;
+}
+.other-box,
+.self-box{
+    margin-bottom: 20px;
+}
+.self-box {
+    text-align: right;
+}
+.content-header {
+    display: inline-block;
+    width: 70px;
+    padding: 8px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    vertical-align: top;
+}
+.content-header  .user-avatar {
+    display: block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #4f4f4f;
+}
+.content-body {
+    display: inline-block;
+    width: 400px;
+    background-color: #808080;
+    padding: 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    vertical-align: top;
+}
+.self-box .content-body {
+    text-align: left;
+}
+.date-box {
+    text-align: center;
+}
+.date-box span {
+    display: inline-block;
+    background-color: #4f4f4f;
+    color: #fff;
+    padding: 10px;
+}
+.content-time {
+    display: inline-block;
+    width: auto;
+    background-color: #fff;
+    padding: 8px;
+    border-radius: 4px;
+    word-break: break-all;
+    vertical-align: top;
+    margin-left: 20px;
+}
+#contentBox {
+    display: inline-block;
+    border: 1px solid #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    width: calc(100% - 300px);
+    padding: 10px;
+}
+#submitContent {
+    margin-left: 20px;
+    vertical-align: top;
+    margin-top: 6px;
+}
+.sidebar-avatar-box,
+.sidebar-content-box {
+    display: inline-block;
+    vertical-align: top;
+}
+.sidebar-avatar-box {
+    width: 40px;
+    height: 40px;
+}
+.sidebar-content-box {
+    margin-left: 5px;
+    width: calc(100% - 45px);
+}
+.sidebar-avatar-box img {
+    width: 100%;
+    vertical-align: top;
+}
+.r-content-top {
+    margin-bottom: 10px;
+}
+.r-latest-bottom {
+    width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.choose-img-btn {
+    margin-left: 20px;
+    vertical-align: top;
+    margin-top: 5px;
+}
+[v-cloak] {
+    display: none;
+}
+.toast-message {
+    font-size: 14px;
+}
