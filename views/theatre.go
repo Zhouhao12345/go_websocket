@@ -3,7 +3,6 @@ package views
 import (
 	"go_ws/models"
 	"log"
-	"time"
 	"go_ws/tools"
 )
 
@@ -24,8 +23,6 @@ type Theatre struct {
 
 	wakeHub chan *Hub
 	deleteHub chan []byte
-
-	local *time.Location
 }
 
 func NewTheatre() *Theatre {
