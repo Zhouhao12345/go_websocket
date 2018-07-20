@@ -1,73 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GGAC-私信</title>
 <link rel="stylesheet" type="text/css" href="http://pre-cdn.ggac.net/lib/css/toastr-2.1.3.min.css">
 <link rel="stylesheet" type="text/css" href="static/css/jquery.mCustomScrollbar.css">
-<!--<link rel="stylesheet" type="text/css" href="http://pre-cdn.ggac.net/lib/css/element-ui-2.2.2.css">-->
-<link rel="stylesheet" type="text/css" href="static/css/chat.css">
+<link rel="stylesheet" type="text/css" href="static/css/chat_mb.css">
+<script src="http://pre-cdn.ggac.net/lib/js/html5shiv.min.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/respond.min.js"></script>
 </head>
 <body>
     <div id="app" v-cloak>
-        <div id="leftBox">
+        <div id="commonHeader">
+            <template v-if="show_name!='left_room'">
+                <a href="javascript:;" class="header-back"  @click="changeBackRoomList">
+                    <img  src="static/image/mobile_header_back.png">
+                </a>
+            </template>
+            <template v-if="show_name=='left_room'">
+                <a  href="http://www.ggac.net" target="_blank" class="header-back">
+                    <img  src="static/image/mobile_header_back.png">
+                </a>
+            </template>
+
+            <a href="http://www.ggac.net" target="_blank" class="header-logo">
+                <img  src="static/image/mobile_header_logo.png">
+            </a>
+        </div>
+        <div id="leftBox" v-show="show_name=='left_room'">
+            <!--
             <div id="currentUserInfo">
-                <img class="current-user-avatar" :src="image_prefix + selfInfo.avatar_image_small" v-lazy="image_prefix + selfInfo.avatar_image_small">
+                <img class="current-user-avatar" :src="image_prefix + selfInfo.avatar_image" v-lazy="image_prefix + selfInfo.avatar_image">
                 <span class="current-user-name font-size18" v-if="selfInfo.username.length>7">{{ selfInfo.username.substring(0, 7) +  "..." }}</span>
                 <span class="current-user-name font-size18" v-else>{{selfInfo.username}}</span>
                 <a href="http://www.ggac.net" target="_self"><img class="current-back" src="static/image/chat_left_back.png"></a>
             </div>
+            -->
             <div id="searchBox">
-                    <div class="search-input" v-if="isMobile=='yes'">
+                    <div class="search-input">
                         <input type="text" name="search" class="form-input-style" v-model="search_data" placeholder="搜索">
-                        <span class="search-icon" @click="submitSearch"><img src="http://cdn.ggac.net/images/seacher_icon.png"></span>
-                    </div>
-                    <div class="search-input" v-else>
-                        <input type="text" name="search" class="form-input-style" v-model="search_data" placeholder="搜索">
-                        <span class="search-icon" @click="submitSearch"><img src="http://cdn.ggac.net/images/seacher_icon.png"></span>
+                        <span class="search-icon" @click="submitSearch"><img src="static/image/mobile_seacher.png"></span>
                     </div>
                     <div class="switch-condition">
-                        <span class="room-contact font-size18" :class="{'is-active' : navbar_type=='room_list'}" @click="get_room_list(false,search_data)">
-                            <img src="static/image/room_on.png" v-if="navbar_type=='room_list'" />
-                            <img src="static/image/room_off.png" v-else />
-                            <span class="tab-nav">私信</span>
-                            <span class="roomlist-unread-count font-size12" v-if="room_list_unread_count>0"></span>
+                        <span class="room-contact" :class="{'is-active' : navbar_type=='room_list'}" @click="get_room_list(false,search_data)">
+                            <img src="static/image/mobile_room_on.png" v-if="navbar_type=='room_list'" />
+                            <img src="static/image/mobile_room_off.png" v-else />
+                            <span class="tab-nav font-size24">私信<span class="roomlist-unread-count font-size12" v-if="room_list_unread_count>0"></span></span>
                         </span>
-                        <span class="tab-divider"></span>
-                        <span class="user-contact font-size18" :class="{'is-active' : navbar_type=='focus_list'}" @click="get_user_focus_list()">
-                            <img src="static/image/focus_on.png" v-if="navbar_type=='focus_list'" />
-                            <img src="static/image/focus_off.png" v-else />
-                            <span class="tab-nav">通讯录</span>
+                        <span class="user-contact" :class="{'is-active' : navbar_type=='focus_list'}" @click="get_user_focus_list(search_data)">
+                            <img src="static/image/mobile_focus_on.png" v-if="navbar_type=='focus_list'" />
+                            <img src="static/image/mobile_focus_off.png" v-else />
+                            <span class="tab-nav font-size24">通讯录</span>
                         </span>
                     </div>
                 </div>
-                <div id="roomList">
+                <div id="roomList"  v-show="navbar_type=='room_list'" >
                     <div v-show="navbar_type=='room_list'" :class="{'without-room-list' : rooms.length==0}">
                     <template v-for="(r, index) in rooms">
-                        <div class="room-box" :class="{'is-active' : r.isActive}"  @click="changeRoom(r.rid)">
+                        <div class="room-box" :class="{'is-active' : r.isActive}" @click="changeRoom(r.rid, 'right_msg')">
                             <div class="sidebar-avatar-box">
                                 <img :src="image_prefix + r.images"  class="user-avatar"/>
                             </div>
                             <div class="sidebar-content-box">
                                 <div class="r-content-top">
-                                    <span class="font-size14 r-desc">{{ r.des }}</span>
-                                    <span class="font-size14 r-date" >{{ r.create_date.split('.')[0].substring(11, 16) }}</span>
+                                    <span class="font-size22 r-desc">{{ r.des }}</span>
+                                    <span class="font-size15 r-date" >{{ r.create_date.split('.')[0].substring(11, 16) }}</span>
                                 </div>
                                 <template v-if="r.unread==0">
-                                    <div class="font-size14 r-latest-bottom">{{r.content}}</div>
+                                    <div class="font-size15 r-latest-bottom">
+                                        {{r.content}}
+                                        <!--<template v-if="r.content.length>9">{{r.content.substring(0, 9)}}</template>
+                                        <template v-else>{{r.content}}</template>-->
+                                    </div>
                                 </template>
                                 <template v-if="r.unread>0 && r.unread<10">
-                                    <div class="font-size14 r-latest-bottom content-up10">{{r.content}}</div>
+                                    <div class="font-size15 r-latest-bottom content-up10">
+                                        {{r.content}}
+                                        <!--<template v-if="r.content.length>9">{{r.content.substring(0, 9)}}</template>
+                                        <template v-else>{{r.content}}</template>-->
+                                    </div>
                                 </template>
                                 <template v-if="r.unread>=10 && r.unread<100">
-                                    <div class="font-size14 r-latest-bottom content-down100">{{r.content}}</div>
+                                    <div class="font-size15 r-latest-bottom content-down100">
+                                        {{r.content}}
+                                        <!--<template v-if="r.content.length>9">{{r.content.substring(0, 9)}}</template>
+                                        <template v-else>{{r.content}}</template>-->
+                                     </div>
                                 </template>
                                 <template v-if="r.unread>=100">
-                                    <div class="font-size14 r-latest-bottom content-up100" v-html="r.content"></div>
+                                    <div class="font-size17 r-latest-bottom content-up100">
+                                        {{r.content}}
+                                        <!--<template v-if="r.content.length>9">{{r.content.substring(0, 9)}}</template>
+                                        <template v-else>{{r.content}}</template>-->
+                                    </div>
                                 </template>
                                 <template v-if="r.unread>0">
-                                    <span class="font-size12 r-badge ten-down" v-if="r.unread<10">{{ r.unread }}</span>
-                                    <span class="font-size12 r-badge hundred-down" v-if="r.unread>=10 && r.unread<100">{{ r.unread }}</span>
-                                    <span class="font-size12 r-badge hundred-up" v-if="r.unread>=100">99+</span>
+                                    <span class="font-size15 r-badge" :class="{'ten-down' : r.unread<10}">{{ r.unread }}</span>
+                                    <span class="font-size15 r-badge" :class="{'hundred-down' : r.unread>=10 && r.unread<100}">{{ r.unread }}</span>
+                                    <span class="font-size15 r-badge" :class="{'hundred-up' :  r.unread>=100}">99+</span>
                                 </template>
                                 <!--<span class="font-size12 r-hide ten-down" @click.stop="hideRoom(r.rid)"><img src="static/image/room_hide.png"></span>-->
                                 <!--<span class="font-size14 r-remove" @click.stop="deleteRoom(r.rid)">X</span>-->
@@ -75,39 +105,47 @@
                         </div>
                     </template>
                     <template v-if="rooms.length==0">
-                        <div class="without-data font-size18">暂无任何私信</div>
+                        <div class="without-data font-size22">暂无任何私信</div>
                     </template>
                     </div>
                 </div>
-                <div id="focusList">
-                    <div  v-show="navbar_type=='focus_list'" :class="{'without-focus-list' : user_focus.length==0}">
+                <div id="focusList" v-show="navbar_type=='focus_list'">
+                    <div v-show="navbar_type=='focus_list'" :class="{'without-focus-list' : user_focus.length==0}">
                         <template v-for="(r, index) in user_focus">
-                        <div class="room-box" :class="{'is-active' : r.id==current_user_focus.id}" @click="changeUserFocus(r)">
+                        <div class="room-box" :class="{'is-active' : r.id==current_user_focus.id}" @click="changeUserFocus(r, 'right_info')">
                             <div class="sidebar-avatar-box">
-                                <img :src="image_prefix + r.avatar_image_small" class="user-avatar"/>
+                                <img :src="image_prefix + r.avatar_image_small"  class="user-avatar"/>
                             </div>
                         <div class="sidebar-content-box">
                         <div class="r-content-top">
-                        <span class="font-size14 r-desc">{{ r.username }}</span>
+                        <span class="font-size22 r-desc">{{ r.username }}</span>
                         </div>
                         </div>
                         </div>
                         </template>
                         <template v-if="user_focus.length==0">
-                            <div class="without-data font-size18">暂无任何关注</div>
+                            <div class="without-data font-size22">暂无任何关注</div>
                         </template>
                     </div>
                 </div>
         </div>
-        <div id="rightBox">
-                <div id="logTitle">
+        <div id="rightBox" v-show="show_name=='right_msg' || show_name=='right_info'">
+                <div id="logTitle" v-show="show_name=='right_msg'">
                     <div class="title-info" v-show="navbar_type=='room_list'">
-                        <span class="info-name font-size18" v-if="current_room.des.length>20">{{ current_room.des.substr(0, 20) }}</span>
-                        <span class="info-name font-size18" v-else>{{ current_room.des }}</span>
+                        <span class="info-avatar">
+                            <img class="u-avatar" :src="image_prefix + current_room.images">
+                        </span>
+                        <span class="info-name font-size22">
+                                <template v-if="current_room.des.length>8">
+                                {{ current_room.des.substr(0, 8) }}
+                                </template>
+                                <template v-else>
+                                {{ current_room.des }}
+                                </template>
+                        </span>
                         <!--
                         <span class="info-delete font-size14">
-                            <img class="dropmenu-icon1" src="static/image/dropmenu_icon1.png">
-                            <img class="dropmenu-icon2" src="static/image/dropmenu_icon2.png">
+                            <img class="dropmenu-icon1" src="static/image/user_dot.png">
                         </span>
                         -->
                     </div>
@@ -118,29 +156,29 @@
                         <div class="self-box" v-if="parseInt(selfInfo.id)==parseInt(message.from_uid)">
                             <div class="content-date">
                                 <span class="font-size12 content-time">{{ reformCreateDate(message.create_date.split('.')[0]) }}</span>
-                                <span class="font-size14 content-body" v-html="message.content"></span>
+                                <span class="font-size16 content-body" v-html="message.content"></span>
                             </div>
                             <span class="content-header">
-                                <a :href="'http://www.ggac.net/user/center/home/' + message.from_uid" target="_blank">
-                                    <img :src="image_prefix + message.image"  class="user-avatar" />
-                                </a>
+                                 <a :href="'http://www.ggac.net/user/center/home/' + message.from_uid" target="_blank">
+                                    <img :src="image_prefix + message.image" class="user-avatar" />
+                                 </a>
                             </span>
                         </div>
                         <div class="other-box" v-else>
                             <span class="content-header">
                                 <a :href="'http://www.ggac.net/user/center/home/' + message.from_uid" target="_blank">
-                                    <img :src="image_prefix + message.image"  class="user-avatar" />
+                                    <img :src="image_prefix + message.image" class="user-avatar" />
                                 </a>
                             </span>
                             <div class="content-date">
                                 <span class="font-size12 content-time">{{ reformCreateDate(message.create_date.split('.')[0]) }}</span>
-                                <span class="font-size14 content-body" v-html="message.content"></span>
+                                <span class="font-size16 content-body" v-html="message.content"></span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <span id="userDisconnected" class="font-size18" v-if="!has_connected" style="display: inline-block;"></span>
-                <span id="form" v-show="navbar_type=='room_list'  && has_connected" style="display: inline-block;">
+                <span id="form" v-show="navbar_type=='room_list' && has_connected" style="display: inline-block;">
                     <!--
                     <div class="emoji-container" style="min-height: 30px;display: none;">
                         <span class="dismiss-emoji font-size12" onclick="dismissContainer()">X</span>
@@ -157,25 +195,11 @@
                         </table>
                     </div>
                     -->
-                    <textarea id="contentBox" name="saytext" class="font-size14" v-model="desc" oninput="if(this.value.length>400){this.value=this.value.slice(0,400);toastr.warning('输入内容不能超出400字符');return false;}"  @input="descInput" @keypress.enter="submitContent($event)"></textarea>
-                    <!--<div id="contentBox" name="saytext" class="font-size14" contentEditable="plaintext-only" onpaste="toastr.warning('禁止粘贴数据');return false;" tabindex="0"></div>-->
+                    <span id="backRoomList" @click="changeBackRoomList">
+                        <img class="back-icon" src="static/image/back_room.png">
+                    </span>
+                    <textarea id="contentBox" name="saytext" class="font-size12" placeholder="说说你的看法" oninput="if(this.value.length>400){this.value=this.value.slice(0,400);toastr.warning('输入内容不能超出400字符');return false;}"></textarea>
                     <!--<img class="choose-img-btn" src="http://pre-cdn.ggac.net/images/fourm_face.png" onclick="chatChooseEmoji(event)">-->
-                    <!--文件上传
-                        <el-upload
-                                class="chat-upload-file"
-                                ref="upload"
-                                action="http://XXX/"
-                                multiple="false"
-                                :on-preview="handlePreview"
-                                :on-remove="handleRemove"
-                                :on-progress="handleProgress"
-                                :on-success="handleSuccess"
-                                :show-file-list="false"
-                                :auto-upload="true">
-                      <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-                    </el-upload>
-                    -->
-                    <span id="leftWords" class="font-size14">{{remnant}}/400</span>
                     <span id="submitContent" class="font-size14" @click="submitContent">发送</span>
                 </span>
                 <div id="focusDetail" v-show="navbar_type=='focus_list'">
@@ -184,11 +208,13 @@
                             <img :src="image_prefix + current_user_focus.avatar_image_small" />
                         </div>
                         <div class="focus-user-name">{{current_user_focus.username}}</div>
+                        <!--
                         <div class="user-focus-fans">
                             <span class="focus-num font-size14">{{current_user_focus.num_focus}}&nbsp;关注</span>
                             <span class="focus-number-divider"></span>
                             <span class="fans-num font-size14">{{current_user_focus.num_focused}}&nbsp;粉丝</span>
                         </div>
+                        -->
                         <div class="operate-box">
                             <div>
                                 <a href="javascript:;" class="focus-send-msg font-size14" @click="sendUserFocus">发信息</a>
@@ -197,7 +223,7 @@
                                 <a :href="'http://www.ggac.net/user/center/home/' + current_user_focus.id" target="_blank" class="focus-check-work font-size14">查看作品</a>
                             </div>
                             <div>
-                                <a href="javascript:;" class="focus-cancle-attention font-size14" v-if="current_user_focus.is_focused" @click="cancelFocusUser(current_user_focus.id)">取消关注</a>
+                                <a href="javascript:;" class="focus-cancle-attention font-size14"  v-if="current_user_focus.is_focused" @click="cancelFocusUser(current_user_focus.id)">取消关注</a>
                                 <a href="javascript:;" class="focus-attention font-size14" v-else @click="focusUser(current_user_focus.id)">关注</a>
                             </div>
                         </div>
@@ -210,13 +236,13 @@
     </div>
 </body>
 <script src="static/js/jquery.min.js"></script>
+<script type="text/javascript" src="http://cdn.ggac.net/lib/js/selectivizr-1.0.2-min.js"></script>
 <script src="http://pre-cdn.ggac.net/lib/js/vue-2.5.13.min.js"></script>
 <script src="http://pre-cdn.ggac.net/lib/js/toastr-2.1.3.min.js"></script>
 <script type="text/javascript" src="static/js/jquery.mousewheel.min.js"></script>
 <script type="text/javascript" src="static/js/jquery.mCustomScrollbar.js"></script>
 <script type="text/javascript" src="static/js/jquery-browser.js"></script>
-<!--<script type="text/javascript" src="http://pre-cdn.ggac.net/lib/js/element-ui-2.2.2.js"></script>-->
 <script type="text/javascript" src="http://pre-cdn.ggac.net/lib/js/vue-lazyload-1.2.3.js"></script>
 <script src="static/js/common.js"></script>
-<script src="static/js/chat.js"></script>
+<script src="static/js/chat_mb.js"></script>
 </html>

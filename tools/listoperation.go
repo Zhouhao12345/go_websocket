@@ -23,3 +23,16 @@ func Sort(list []string) ([]string, error)  {
 	}
 	return list, nil
 }
+
+func Reverse(list []map[string]string)([]map[string]string, error)  {
+	length := len(list)
+	var new_list []map[string]string
+	if length != 0 {
+		for i:=length-1; i>=0; i-- {
+			new_list = append(new_list, list[i])
+		}
+		return new_list, nil
+	} else {
+		return list , nil
+	}
+}

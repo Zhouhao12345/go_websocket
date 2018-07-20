@@ -58,27 +58,31 @@ func (t *Theatre) Run() {
 				if _, ok := t.members[member.user]; ok {
 					delete(t.members, member.user)
 					close(member.room)
+					close(member.send)
+					close(member.test_connect)
+					close(member.room_created)
+					close(member.room_deleted)
+					close(member.receive_error)
 				}
 			case room_id := <- t.deleteHub:
 				room_id_str := string(room_id)
-				m := &models.Models{}
-				userRaws, err := m.SelectQuery(
+				userRaws, err := models.SelectQuery(
 					"select ggacuser_id from web_chatroom_users " +
 						"where chatroom_id = ?", room_id_str)
 				if err != nil {
 					log.Printf("error: %v", err)
 				}
 				// delete room
-				err2 := m.DeleteQuery(
+				err2 := models.DeleteQuery(
 					"delete from web_chatmessage where room_id = ?", room_id_str)
 				if err2 != nil {
 					log.Printf("error: %v", err2)
 				}
-				err3 := m.DeleteQuery("delete from web_chatroom_users where chatroom_id = ?", room_id_str)
+				err3 := models.DeleteQuery("delete from web_chatroom_users where chatroom_id = ?", room_id_str)
 				if err3 != nil {
 					log.Printf("error: %v", err3)
 				}
-				err4 := m.DeleteQuery("delete from web_chatroom where id = ?", room_id_str)
+				err4 := models.DeleteQuery("delete from web_chatroom where id = ?", room_id_str)
 				if err4 != nil {
 					log.Printf("error: %v", err4)
 				}
@@ -94,8 +98,7 @@ func (t *Theatre) Run() {
 					inString = inString + member.user + ","
 				}
 				inString = inString + "0)"
-				m:=&models.Models{}
-				userRaws, err := m.SelectQuery(
+				userRaws, err := models.SelectQuery(
 					"select ggacuser_id from web_chatroom_users " +
 						"where ggacuser_id not in "+ inString +" and chatroom_id = ?", hub.room_id)
 				if err != nil {
@@ -104,13 +107,13 @@ func (t *Theatre) Run() {
 				for _, user := range userRaws {
 					userId := user["ggacuser_id"]
 					if member,ok := t.members[userId]; ok{
-						roomRows, err := m.SelectQuery(
+						roomRows, err := models.SelectQuery(
 							"select room.id as rid , k.user_names as des, k.images as images , count(message.id) as unread from web_chatroom as room " +
 								"inner join web_chatroom_users as chroom on room.id = chroom.chatroom_id " +
 								"left join web_chatmessage as message on message.room_id = chroom.chatroom_id and " +
 								"message.unread = 1 and message.user_id != ?"+
 								" inner join (SELECT GROUP_CONCAT(users.username) as user_names, " +
-									"GROUP_CONCAT(gusers.avatar_image) AS images, " +
+									"GROUP_CONCAT(gusers.avatar_image_small) AS images, " +
 								"chroom.chatroom_id FROM auth_user AS users " +
 								"INNER JOIN web_chatroom_users AS chroom ON chroom.ggacuser_id = users.id " +
 								"INNER JOIN web_ggacuser AS gusers ON gusers.user_ptr_id = users.id " +
@@ -120,7 +123,7 @@ func (t *Theatre) Run() {
 						if err != nil {
 							log.Printf("error: %v", err)
 						}
-						messageRows, err1 := m.SelectQuery(
+						messageRows, err1 := models.SelectQuery(
 							"select message.content, message.create_date from web_chatmessage as message " +
 								"where message.room_id = ? order by create_date desc limit 1", roomRows[0]["rid"])
 						if err1 != nil {

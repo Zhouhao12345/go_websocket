@@ -10,6 +10,7 @@ import (
 	"go_ws/models"
 	"strings"
 	"encoding/json"
+	"go_ws/error_ws"
 )
 
 const (
@@ -54,6 +55,7 @@ type Member struct {
 	test_connect chan []byte
 	room_created chan map[string]string
 	room_deleted chan []byte
+	receive_error chan []byte
 }
 
 func (m *Member) readPump() {
@@ -92,6 +94,15 @@ func (m *Member) readPump() {
 						m.hub.unregister <- m
 					}
 					room_id := event["data"].(map[string]interface{})["room_id"].(string)
+					roomRaws, err := models.SelectQuery(
+						"select id from web_chatroom as room where id = ?", room_id)
+					if err != nil {
+						m.receive_error <- []byte("0002")
+						log.Fatalln(err)
+					}
+					if len(roomRaws) == 0 {
+						m.receive_error <- []byte("0002")
+					}
 					if hub, ok := m.theatre.hubs[room_id]; ok {
 						m.hub = hub
 						m.hub.register <- m
@@ -135,7 +146,7 @@ func (m *Member) writePump() {
 				}
 
 				messageData := make(map[string]interface{})
-				var messageArrays []string
+				messageArrays := make([]string, 0)
 				messageArrays = append(messageArrays, string(message))
 				n := len(m.test_connect)
 				for i := 0; i < n; i++ {
@@ -165,7 +176,7 @@ func (m *Member) writePump() {
 
 				messageArray := strings.SplitN(string(message), "&", 3)
 				messageData := make(map[string]interface{})
-				var messageArrays []map[string]string
+				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{
 					"rid": messageArray[0],
 					"create_date": messageArray[1] + ".000000",
@@ -205,7 +216,7 @@ func (m *Member) writePump() {
 
 				messageArray := strings.SplitN(string(message), "&", 7)
 				messageData := make(map[string]interface{})
-				var messageArrays []map[string]string
+				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{
 					"mid": messageArray[0],
 					"rid": messageArray[1],
@@ -250,7 +261,7 @@ func (m *Member) writePump() {
 					return
 				}
 				messageData := make(map[string]interface{})
-				var messageArrays []map[string]string
+				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, room)
 				// Add queued chat messages to the current websocket message.
 				n := len(m.room_created)
@@ -263,36 +274,68 @@ func (m *Member) writePump() {
 				if err := w.Close(); err != nil {
 					return
 				}
-		case room_deleted, ok := <-m.room_deleted:
-			m.conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if !ok {
-				// The hub closed the channel.
-				m.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
+			case room_deleted, ok := <-m.room_deleted:
+				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if !ok {
+					// The hub closed the channel.
+					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
 
-			w, err := m.conn.NextWriter(websocket.TextMessage)
-			if err != nil {
-				return
-			}
-			messageData := make(map[string]interface{})
-			var messageArrays []map[string]string
-			messageArrays = append(messageArrays, map[string]string{
-				"room_id": string(room_deleted),
-			})
-			// Add queued chat messages to the current websocket message.
-			n := len(m.room_deleted)
-			for i := 0; i < n; i++ {
+				w, err := m.conn.NextWriter(websocket.TextMessage)
+				if err != nil {
+					return
+				}
+				messageData := make(map[string]interface{})
+				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{
-					"room_id": string(<-m.room_deleted),
+					"room_id": string(room_deleted),
 				})
-			}
-			messageData["method"] = "room_deleted"
-			messageData["data"] = messageArrays
-			json.NewEncoder(w).Encode(messageData)
-			if err := w.Close(); err != nil {
-				return
-			}
+				// Add queued chat messages to the current websocket message.
+				n := len(m.room_deleted)
+				for i := 0; i < n; i++ {
+					messageArrays = append(messageArrays, map[string]string{
+						"room_id": string(<-m.room_deleted),
+					})
+				}
+				messageData["method"] = "room_deleted"
+				messageData["data"] = messageArrays
+				json.NewEncoder(w).Encode(messageData)
+				if err := w.Close(); err != nil {
+					return
+				}
+			case error_code, ok := <-m.receive_error:
+				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if !ok {
+					// The hub closed the channel.
+					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+
+				w, err := m.conn.NextWriter(websocket.TextMessage)
+				if err != nil {
+					return
+				}
+				messageData := make(map[string]interface{})
+				messageArrays := make([]map[string]string, 0)
+				messageArrays = append(messageArrays, map[string]string{
+					"error": error_ws.Errormessagegenerate(string(error_code)),
+					"code": string(error_code),
+				})
+				// Add queued chat messages to the current websocket message.
+				n := len(m.room_deleted)
+				for i := 0; i < n; i++ {
+					messageArrays = append(messageArrays, map[string]string{
+						"error": error_ws.Errormessagegenerate(string(error_code)),
+						"code": string(error_code),
+					})
+				}
+				messageData["method"] = "error_received"
+				messageData["data"] = messageArrays
+				json.NewEncoder(w).Encode(messageData)
+				if err := w.Close(); err != nil {
+					return
+				}
 			case <-ticker.C:
 				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := m.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
@@ -303,20 +346,26 @@ func (m *Member) writePump() {
 }
 
 func ServeWs(w http.ResponseWriter, r *http.Request, theatre *Theatre)  {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		http.Error(w, "Connect Forbidden!", http.StatusForbidden)
-		return
-	}
 	signed, userId := tools.SingleSign(r)
 	if signed == false {
 		http.Error(w, "Please Sign in!", http.StatusOK)
 		return
 	}
+	if member_existed, ok := theatre.members[userId];ok{
+		member_existed.receive_error <- []byte("0003")
+		delete(theatre.members, member_existed.user)
+		delete(member_existed.hub.members, member_existed)
+		member_existed.conn.Close()
+	}
 
-	m := &models.Models{}
-	userRow, err := m.SelectQuery(
-		"select user.username, guser.avatar_image as image from auth_user as user " +
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		http.Error(w, "Connect Forbidden!", http.StatusForbidden)
+		return
+	}
+
+	userRow, err := models.SelectQuery(
+		"select user.username, guser.avatar_image_small as image from auth_user as user " +
 			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id where user.id = ?", userId)
 	if err != nil {
 		log.Printf("error: %v", err)
@@ -337,9 +386,9 @@ func ServeWs(w http.ResponseWriter, r *http.Request, theatre *Theatre)  {
 		test_connect:make(chan []byte,256),
 		room_created:make(chan map[string]string),
 		room_deleted:make(chan []byte,256),
+		receive_error:make(chan []byte,256),
 	}
 	member.theatre.registerMember <- member
-
 	go member.writePump()
 	go member.readPump()
 }

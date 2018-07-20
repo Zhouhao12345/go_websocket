@@ -19,23 +19,22 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please sign in firstly!", http.StatusOK)
 		return
 	}
-	m := &models.Models{}
 
 	//todo fixme improve it
-	messageRows, err := m.SelectQuery(
+	messageRows, err := models.SelectQuery(
 		"select message.id as mid , message.content as content, " +
 			"message.room_id as rid, message.user_id as from_uid, message.create_date, " +
-			"user.username as from_name, guser.avatar_image as image " +
+			"user.username as from_name, guser.avatar_image_small as image " +
 			"from web_chatmessage as message " +
 			"inner join auth_user as user on user.id = message.user_id and user.is_active = 1 " +
 			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id" +
-			" where message.room_id = ? order by message.create_date", room)
+			" where message.room_id = ? order by message.create_date desc limit 30", room)
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	err1 := m.UpdateQuery(
+	err1 := models.UpdateQuery(
 		"UPDATE web_chatmessage INNER JOIN web_chatroom on web_chatroom.id = web_chatmessage.room_id" +
 			" set unread = 0 WHERE web_chatroom.id = ? AND web_chatmessage.user_id != ?", room, useId)
 	if err1 != nil {
@@ -43,9 +42,10 @@ func APIMessage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err1.Error(), http.StatusInternalServerError)
 		return
 	}
+	reverseList, _ := tools.Reverse(messageRows)
 	w.Header().Set("Content-Type", "application/json")
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
-	encoder.Encode(messageRows)
+	encoder.Encode(tools.ApiJsonNormalization(reverseList, 0, "success"))
 	return
 }

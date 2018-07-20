@@ -9,14 +9,13 @@ import (
 )
 
 func SingleSign(r *http.Request) (signed bool, userId string) {
-	sessionId, err := r.Cookie("sessionid")
+	sessionId, err := r.Cookie("ggsessionid")
 	if err != nil {
 		return false, "0"
 	}
-	m := &models.Models{}
 
 	//todo fixme improve it
-	sessionRow, err := m.SelectQuery(
+	sessionRow, err := models.SelectQuery(
 		"select session_data from django_session where session_key = ?", sessionId.Value)
 	if err != nil {
 		return false, "0"

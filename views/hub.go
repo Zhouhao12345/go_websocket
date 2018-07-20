@@ -54,7 +54,6 @@ func (h *Hub) run() {
 			messageArray := strings.SplitN(string(message), "&", 4)
 			userId := messageArray[0]
 			content := messageArray[3]
-			m := &models.Models{}
 
 			// todo fixme unread should in improve
 			var unread string
@@ -64,14 +63,16 @@ func (h *Hub) run() {
 				unread = "1"
 			}
 
-			id, err := m.InsertQuery(
+			id, err := models.InsertQuery(
 				"INSERT INTO web_chatmessage ( create_uid, create_date, " +
 					"update_uid, update_date, content, unread, room_id, user_id ) VALUES" +
 					"(?, ?, ?, ?, ?, ?, ?, ?)",
 				userId, current_time , userId, current_time ,tools.RemoveHtmlTags(content), unread, h.room_id, userId)
-			messageFullByte := []byte(strconv.FormatInt(id, 10)+"&"+h.room_id+"&"+ current_time+"&"+string(message))
+			messageFullByte := []byte(strconv.FormatInt(id, 10)+"&"+h.room_id+"&"+ current_time+"&"+tools.RemoveHtmlTags(string(message)))
 			if err != nil {
 				log.Printf("error: %v", err)
+				h.theatre.members[userId].receive_error <- []byte("0001")
+				continue
 			}
 			h.theatre.wakeHub <- h
 			for member := range h.members {

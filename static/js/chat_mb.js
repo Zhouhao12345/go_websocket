@@ -37,7 +37,6 @@ var app = new Vue({
             room_id: 0,
             current_room_id: 0,
             current_room: {
-                index: -1,
                 images: '',
                 des: ''
             },
@@ -61,14 +60,18 @@ var app = new Vue({
             },
             navbar_type: 'room_list',
             room_list_unread_count: 0,
-            desc: "", //已输入字数
-            remnant: 400 //限定字数
+            show_name: 'left_room' //right_msg: 聊天界面，right_info: 通讯录内容， left_room: 私信 or 通讯录
         },
         created: function() {
-            this.websocket_start();
+            var roomEnterId = this.getQueryString("room_id");
+            if(roomEnterId!=-1){
+                //当前处于聊天界面
+                this.show_name = "right_msg";
+            }
             this.initData();
             this.get_user();
             this.get_room_list(true,this.search_data);
+            this.websocket_start();
         },
         methods: {
             initData:function(){
@@ -78,10 +81,6 @@ var app = new Vue({
                 } else {
                     this.isMobile = 'yes';
                 }
-            },
-            descInput: function() {
-                var txtVal = this.desc.length;
-                this.remnant = 400 - txtVal;
             },
             get_user: function () {
                 var that = this;
@@ -117,8 +116,8 @@ var app = new Vue({
                         }
                         if(that.rooms.length>0) {
                             if(is_init) {
-                                that.current_room_id = that.current_room_id>0 ? that.current_room_id : that.rooms[0].rid;
-                                if(app.getQueryString("room_id")!=-1){
+                                that.current_room_id = that.current_room_id > 0 ? that.current_room_id : that.rooms[0].rid;
+                                if (app.getQueryString("room_id") != -1) {
                                     /*url room id*/
                                     that.current_room_id = app.getQueryString("room_id");
                                 }
@@ -126,15 +125,13 @@ var app = new Vue({
                                 //通讯录切换回私信，默认第一个
                                 that.current_room_id = that.rooms[0].rid;
                             }
-
-                            that.changeRoom(that.current_room_id, true);
+                            that.changeRoom(that.current_room_id, '');
                             that.initRoomItemContent();
                         }
                         that.calc_roomlist_unread_count();
-
-                        Vue.nextTick(function(){
-                            $('#roomList').mCustomScrollbar("destroy");
-                            $('#roomList').mCustomScrollbar("");
+                        Vue.nextTick(function() {
+                            $("#roomList").mCustomScrollbar("destroy");
+                            $('#roomList').mCustomScrollbar();
                         });
                     }
                 });
@@ -142,9 +139,11 @@ var app = new Vue({
             get_user_focus_list: function(value) {
 
                 var that = this;
-                this.search_data = "";
+                that.search_data = "";
                 that.navbar_type = "focus_list";
                 console.log(this.navbar_type);
+                console.log("search_data: " + value);
+                that.user_focus = [];
                 $.ajax("/api/user/focused/list", {
                     data: {
                         key: value
@@ -152,15 +151,16 @@ var app = new Vue({
                     dataType: 'json',
                     type: 'GET',
                     success: function(response) {
-                        if(response.return_code==0) {
-                            that.user_focus = response.data;
-                        } else {
-                            toastr.warning(response.result);
-                        }
-                        if(that.user_focus.length>0) {
-                            that.current_user_focus = that.user_focus[0];
-                            that.getFocusUserInfo(that.current_user_focus.id); //拉取当前通讯联系人详情数据（粉丝、关注）
-                        }
+                            if(response.return_code==0) {
+                                that.user_focus = response.data;
+                            } else {
+                                toastr.warning(response.result);
+                            }
+                            if (that.user_focus.length > 0) {
+                                that.current_user_focus = that.user_focus[0];
+                            //    that.getFocusUserInfo(that.current_user_focus.id); //拉取当前通讯联系人详情数据（粉丝、关注）
+                            }
+
                         Vue.nextTick(function(){
                             $('#focusList').mCustomScrollbar("destroy");
                             $('#focusList').mCustomScrollbar();
@@ -170,6 +170,7 @@ var app = new Vue({
             },
             getFocusUserInfo: function(user_id) {
                 var that = this;
+                // app.show_name = "right_info";
                 $.ajax("/api/user/detail", {
                     data: {
                         user_id: user_id
@@ -178,12 +179,12 @@ var app = new Vue({
                     type: 'GET',
                     success: function(response) {
                         if(response.return_code==0) {
-                            Vue.set(app.current_user_focus, 'num_focus', response.data[0].num_focus);
-                            Vue.set(app.current_user_focus, 'num_focused', response.data[0].num_focused);
+                            Vue.set(app. current_user_focus, 'num_focus', response.data[0].num_focus);
+                            Vue.set(app. current_user_focus, 'num_focused', response.data[0].num_focused);
                             Vue.set(app.current_user_focus, 'is_focused', true);
                         } else {
-                            Vue.set(app.current_user_focus, 'num_focus', 0);
-                            Vue.set(app.current_user_focus, 'num_focused', 0);
+                            Vue.set(app. current_user_focus, 'num_focus', 0);
+                            Vue.set(app. current_user_focus, 'num_focused', 0);
                             Vue.set(app.current_user_focus, 'is_focused', false);
                             toastr.warning(response.result);
                         }
@@ -192,6 +193,7 @@ var app = new Vue({
             },
             cancelFocusUser: function(user_id) {
                 var that = this;
+                //app.show_name = "left_room";
                 $.ajax("/api/user/focused/cancel ", {
                     data: {
                         user_id: user_id
@@ -220,13 +222,15 @@ var app = new Vue({
                         } else {
                             toastr.success(response.result);
                         }
+
                         //app.get_user_focus_list(""); //重新拉取通讯录列表
                     }
                 });
             },
-            changeUserFocus: function(focusUser) {
+            changeUserFocus: function(focusUser,type) {
                 app.current_user_focus = focusUser;
                 app.getFocusUserInfo(app.current_user_focus.id);  //拉取当前通讯联系人详情数据（粉丝、关注）
+                app.show_name = "right_info";
             },
             calc_roomlist_unread_count: function() {
                 app.room_list_unread_count = 0;
@@ -266,7 +270,6 @@ var app = new Vue({
                     success: function(response) {
                         if(response.return_code==0){
                             that.messages = response.data;
-                            app.resetContentBox(); //reset send message box
                             app.scrollToEnd();
                         } else {
                             that.messages = [];
@@ -274,9 +277,9 @@ var app = new Vue({
                         }
 
                         Vue.nextTick(function(){
-                            $('#log').mCustomScrollbar("destroy");
-                            $('#log').mCustomScrollbar("");
-                            $('#log').mCustomScrollbar("scrollTo", "bottom", {scrollInertia: 0});
+                            $('#roomList').mCustomScrollbar();
+                            $('#log').mCustomScrollbar();
+                            console.log("initScrollbar");
                         });
 
                        //初始化滚动条样式
@@ -287,22 +290,22 @@ var app = new Vue({
                 if(this.navbar_type=='room_list') {
                     this.get_room_list(false,this.search_data);
                 } else {
-                    this.get_user_focus_list(this.search_data);
+                    this.get_user_focus_list(app.search_data);
                 }
 
             },
-            submitContent: function(evt){
-
+            submitContent: function(){
                 var removeBr = $("#contentBox").val().replace(/<br>/ig,"");   //remove <br>
                 var removerBrSpace = removeBr.replace(/\s+/g,"");  //remove blank space
                 var removerBrSpaceNbsp = removerBrSpace.replace(/&nbsp;/ig, "");  //remove &nbsp;
 
                 if(removeBr=="" || removerBrSpace=="" || removerBrSpaceNbsp=="") {
                     toastr.warning("请输入数据");
-                    app.resetContentBox(); //reset send message box
-                    evt.preventDefault();
-                    return false;
+                    $("#contentBox").val("");
+                    //$("#contentBox").focus();
+                    return;
                 }
+
 
                 var reg = /[!！@#$%^*]/g;
                 if(reg.test($("#contentBox").val())){
@@ -318,7 +321,7 @@ var app = new Vue({
                 }
                 var content = $("#contentBox").val().replace(/<[^>]+>/g,"");//去掉所有的html标记
                 if(content.length>400) {
-                    toastr.warning('输入内容不能超出400字符！');
+                    toastr.warning('输入内容不能查超出400字符！');
                     return;
                 }
 
@@ -326,6 +329,7 @@ var app = new Vue({
                 app.scrollToEnd();
             },
             submitCommand: function(msg) {
+                console.log(msg);
                 var that = this;
                 var interval = setInterval(function () {
                     console.log(that.conn.readyState);
@@ -334,6 +338,7 @@ var app = new Vue({
                         clearInterval(interval);
                     }
                 }, 100);
+
                 setTimeout(function() {
                     if(interval && that.conn.readyState!==1) {
                         //超时处理
@@ -341,6 +346,7 @@ var app = new Vue({
                         that.handleErrorReceived("超时连接,请刷新页面重试");
                     }
                 }, 10000);
+
             },
             deleteRoom: function(room_id) {
                 if (this.conn.readyState===1) {
@@ -350,6 +356,7 @@ var app = new Vue({
                             room_id: room_id
                         }
                     };
+                    console.log(msg);
                     this.conn.send(objToJson(msg));
                 }
             },
@@ -357,19 +364,9 @@ var app = new Vue({
                 if (window["WebSocket"]) {
                     var that = this;
                     this.conn = new WebSocket("ws://" + document.location.host + "/ws");
-                    this.conn.onopen = function () {
-                        console.log("socket has been opened");
-                        var message = {
-                            method: "test_connect",
-                            data:"200"
-                        };
-                        that.conn.send(objToJson(message));
-                    };
-                    this.conn.onclose = function () {
-                        that.handleErrorReceived("您与服务器失去联系, 请刷新页面重试");
-                    };
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
+                        console.log("receive:" + messages[0]);
                         var msg = jsonToObj(messages[0]);
                         switch (msg.method) {
                             case 'test_connect':
@@ -393,6 +390,19 @@ var app = new Vue({
                             default:break;
                         }
                     };
+
+                    this.conn.onopen = function () {
+                        console.log("socket has been opened");
+                        var message = {
+                            method: "test_connect",
+                            data:"200"
+                        };
+                        that.conn.send(objToJson(message));
+                    };
+
+                    this.conn.onclose = function () {
+                        that.handleErrorReceived("您与服务器失去联系, 请刷新页面重试");
+                    };
                     this.conn.onerror = function () {
                         that.handleErrorReceived("连接中断, 请刷新页面重试");
                     };
@@ -405,52 +415,37 @@ var app = new Vue({
                 that.has_connected = false;
                 $("#userDisconnected").html("");
                 Vue.nextTick(function(){
-                    $("#userDisconnected").append("<span style='display: block; text-align: center;padding-top: 70px;'>" + tip +"</span>");
+                    $("#userDisconnected").append("<span style='display: block; text-align: center;padding-top: 22px;'>" + tip +"</span>");
                 });
+            },
+            handleOnClose: function(tip) {
+                var that = this;
+                Vue.nextTick(function(){
+                    that.has_connected = false;
+                    var item = document.createElement("div");
+                    item.innerHTML = "<span class='font-size12' style='display: block; text-align: center;padding-top: 30px;'>" + tip +"</span>";
+                    that.appendLog(item);
+                    var h =  $(window).height() - 80;
+                    $("#log").css({"height" : h + "px"});
+                });
+
             },
             handleTestConnect: function(msg) {
-                Vue.nextTick(function(){
-                    app.has_connected = true;
-                    app.user = parseInt(msg.data[0]);
-                });
+                app.has_connected = true;
+                app.user = parseInt(msg.data[0]);
             },
             handleSendMessage:function(msg) {
-                if(parseInt(app.user)==parseInt(msg.data[0].from_uid)) {
-                    var  msgBox = '<div>'+
-                        '<div class="self-box">' +
-                        '<div class="content-date">'+
-                        '<span class="font-size12 content-time">' + app.reformCreateDate(msg.data[0].create_date.split('.')[0]) + '</span>'+
-                        '<span class="font-size14 content-body">' + msg.data[0].content + '</span>' +
-                        '</div>' +
-                        '<span class="content-header">'+
-                        '<img src="' + app.image_prefix + msg.data[0].image + '" class="user-avatar mCS_img_loaded">' +
-                        '</span>'+
-                        '</div>' +
-                        '</div>';
-                } else {
-                    var msgBox = '<div>' +
-                                    '<div class="other-box">' +
-                                        '<span class="content-header">' +
-                                            '<img src="' + app.image_prefix + msg.data[0].image + '" class="user-avatar mCS_img_loaded">' +
-                                        '</span>' +
-                                        '<div class="content-date">' +
-                                            '<span class="font-size12 content-time">' + app.reformCreateDate(msg.data[0].create_date.split('.')[0]) + '</span>' +
-                                            '<span class="font-size14 content-body">' + msg.data[0].content + '</span>' +
-                                        '</div>' +
-                                    '</div>' +
-                                '</div>';
-                }
-
-
-                // if(app.navbar_type == "focus_list" && app.rooms.length>0) {
-                //     //当前是通讯录&接收到房间聊天记录
-                //
-                // } else {
-                    $("#log .mCSB_container").append(msgBox);
-                //}
+                /*添加时间提示*/
+                // if(1) {
+                //     var dateinfo = {
+                //                         "isDate": true,
+                //                         "create_date": msg.data[0].create_date,
+                //     };
+                //     this.messages.push(dateinfo);
+                // }
+                app.messages.push(msg.data[0]);
                 app.calc_roomlist_unread_count();
                 app.reformRoomUnread(msg.data[0], true);
-
                 //dismissContainer();
 
                 if(parseInt(app.user)==parseInt(msg.data[0].from_uid)) {
@@ -461,13 +456,15 @@ var app = new Vue({
                             app.rooms.sort(roomTimeCompare("create_date")); //reform room squence
                         } else {
                             app.rooms = IeRoomUpTop(JSON.parse(JSON.stringify(app.rooms)), app.current_room.index);
-                            app.current_room.index = 0;
                         }
-                        $('#roomList').mCustomScrollbar("destroy");
-                        $('#roomList').mCustomScrollbar();
                     });
                 }
                 app.scrollToEnd(); //scroll to bottom
+            },
+            resetContentBox: function() {
+                //reset send message box
+                $("#contentBox").val("");
+                //$("#contentBox").focus();
             },
             handleCreateRoom:function(msg) {
                 //不在roomsm内，push(msg)
@@ -493,7 +490,7 @@ var app = new Vue({
                         //还有房间则切换第一个
                         app.current_room_id = app.rooms[0].rid;
                         //拉取当前room数据msg
-                        app.changeRoom(app.current_room_id, true);
+                        app.changeRoom(app.current_room_id, '');
                         app.reformActiveRoom(app.rooms[0].rid);
                     } else {
                         //没有房间不切换
@@ -510,13 +507,14 @@ var app = new Vue({
                     log.scrollTop = log.scrollHeight - log.clientHeight;
                 }
             },
-            changeRoom: function (room_id,isInit) {
+            changeRoom: function (room_id, type) {
+                if(type=="right_msg") {
+                    //显示聊天页
+                    app.show_name = "right_msg";
+                }
                 this.messages = [];
                 if(app.rooms.length>0) {
                     this.get_room_messages(room_id);
-                    if(!isInit) {
-                        $("#log .mCSB_container div:first-child").remove();
-                    }
                     this.submitCommand({
                         method: 'enter_room',
                         data:{
@@ -524,16 +522,8 @@ var app = new Vue({
                         }
                     });
                     app.reformActiveRoom(room_id); //init active room
-                    app.resetContentBox(); //reset send message box
-
                 }
 
-            },
-            resetContentBox: function() {
-                //reset send message box
-                app.desc = "";
-                app.descInput();
-                $("#contentBox").focus();
             },
             searchSubStr: function(str,subStr){
                 var pos = str.indexOf(subStr);
@@ -543,10 +533,14 @@ var app = new Vue({
                 }
             },
             scrollToEnd:function(){//滚动到底部
-                    //Vue.nextTick(function () {
-                        $('#log').mCustomScrollbar("update");
-                        $('#log').mCustomScrollbar("scrollTo", "bottom", {scrollInertia: 0});
-                    //});
+                Vue.nextTick(function () {
+                    $("#roomList").mCustomScrollbar("destroy"); //
+                    $('#log').mCustomScrollbar("destroy");
+                    $('#roomList').mCustomScrollbar();
+                    $('#log').mCustomScrollbar();
+                    $('#log').mCustomScrollbar("scrollTo", $('#log').height() + 99999, {scrollInertia: 10});
+                    $("#contentBox").val("");
+                });
             },
             reformActiveRoom: function(room_id) {
                 if(app.rooms.length>0) {
@@ -556,7 +550,6 @@ var app = new Vue({
                             app.current_room_id = room_id;
                             Vue.set(app.rooms[i], 'unread', 0);
                             app.current_room = app.rooms[i];
-                            Vue.set(app.current_room, 'index', i);
                         } else {
                             Vue.set(app.rooms[i], 'isActive', false);
                         }
@@ -607,18 +600,8 @@ var app = new Vue({
                 var r = window.location.search.substr(1).match(reg);
                 if (r != null) return unescape(r[2]); return -1;
             },
-            handlePreview: function(file) {
-                console.log("handlePreview");
-            },
-            handleRemove: function(file, fileList) {
-                console.log("handleRemove");
-            },
-            handleProgress: function(event, file, fileList) {
-                console.log("handleProgress");
-            },
-            handleSuccess: function(response, file, fileList) {
-                console.log("handleSuccess");
-                console.log(response);
+            changeBackRoomList: function() {
+                location.href = "http://" + document.location.host  + "/home_mb";
             }
         }
     });

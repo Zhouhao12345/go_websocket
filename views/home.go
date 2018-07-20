@@ -13,8 +13,21 @@ func ServeHome(w http.ResponseWriter, r *http.Request)  {
 	}
 	signed, _ := tools.SingleSign(r)
 	if signed == false {
-		http.Redirect(w,r,"/login", http.StatusFound)
+		http.Redirect(w,r,"/login?next="+r.RequestURI, http.StatusFound)
 		return
 	}
 	http.ServeFile(w, r, config.HOME_TEMPLATE)
+}
+
+func ServeHomeMb(w http.ResponseWriter, r *http.Request)  {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	signed, _ := tools.SingleSign(r)
+	if signed == false {
+		http.Redirect(w,r,"/login?next="+r.RequestURI, http.StatusFound)
+		return
+	}
+	http.ServeFile(w, r, config.HOME_MB_TEMPLATE)
 }

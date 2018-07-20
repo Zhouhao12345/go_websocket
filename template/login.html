@@ -5,7 +5,7 @@
 </head>
 <body>
     <div id="app">
-        <div>{{ message }}</div>
+        <div>请登录<a :href="login_url" target="_blank">GGAC</a>,在点击<a :href="next">我</a>登陆私信</div>
     </div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
@@ -13,8 +13,20 @@
     var app = new Vue({
         el: '#app',
         data: {
-            message: 'Please Login!',
+            login_url: "http://www.ggac.net/login",
+            next: ""
         },
+        mounted: function () {
+            this.next = this.getQueryString("next");
+        },
+        methods: {
+            getQueryString: function(name) {
+                /*get url param*/
+                var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+                var r = window.location.search.substr(1).match(reg);
+                if (r != null) return unescape(r[2]); return -1;
+            }
+        }
     })
 </script>
 </html>

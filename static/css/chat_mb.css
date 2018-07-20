@@ -2,9 +2,9 @@
     display: none;
 }
 
+
     body {
-        overflow: auto;
-        overflow-x: hidden !important;
+        overflow: hidden;
         padding: 0;
         margin: 0;
         width: 100%;
@@ -15,26 +15,44 @@
     }
 
     #app {
-        width: 1200px;
-        height: 800px;
-        margin: 0 auto;
-        margin-top: 100px;
+        width: 100%;
+        height: 100vh;
     }
 
+    #commonHeader {
+        position: relative;
+        background-color: #141414;
+        padding: 10px 0;
+        text-align: center;
+    }
+    .header-back {
+        position: absolute;
+        left: 15px;
+        top: 18px;
+
+    }
+    .header-back img{
+        width: 16px;
+        height: 14px;
+    }
+    .header-logo img{
+        width: 80px;
+        height: 30px;
+    }
     #leftBox, #rightBox {
         display: inline-block;
-        height: 800px;
+        height: calc(100vh - 50px);
         vertical-align: top;
         overflow-y: hidden;
     }
 
     #leftBox {
-        width: 300px;
+        width: 100%;
         background-color: #000;
     }
 
     #rightBox {
-        width: 900px;
+        width: 100%;
     }
 
     #currentUserInfo {
@@ -72,10 +90,10 @@
         -webkit-border-radius: 4px;
         -moz-border-radius: 4px;
         border-radius: 4px;
-        padding: 6px 50px 6px 10px;
+        padding: 6px 50px 6px 35px;
         outline: 0 !important;
-        width: 260px;
-        height: auto;
+        width: 100%;
+        height: 40px;
         font-size: 14px;
         text-shadow: none;
         -webkit-text-shadow: none;
@@ -95,56 +113,81 @@
         font-size: 14px;
     }
 
+
+    .font-size15 {
+        font-size: 14px;
+    }
+
     .font-size16 {
         font-size: 16px;
+    }
+    .font-size17 {
+        font-size: 17px;
     }
 
     .font-size18 {
         font-size: 18px;
     }
 
+    .font-size20 {
+        font-size: 20px;
+    }
+
+    .font-size22 {
+        font-size: 22px;
+    }
+    .font-size24 {
+        font-size: 24px;
+    }
+
     #searchBox {
-        height: 95px;
-        padding: 0 20px;
-        border-bottom: 1px solid #202020;
+        //padding: 0 15px;
+        //border-bottom: 1px solid #202020;
     }
 
     .search-input {
         position: relative;
-        margin-bottom: 20px;
+        //margin-top: 15px;
+        //margin-bottom: 15px;
+        margin: 15px;
     }
 
     .search-icon {
         position: absolute;
-        right: 0;
-        top: 1px;
+        left: 10px;
+        top: 13px;
         display: inline-block;
-        background-color: #4fe2fe;
-        width: 40px;
-        height: 28px;
-        cursor: pointer;
-        border-bottom-right-radius: 4px;
-        border-top-right-radius: 4px;
     }
 
     .search-icon img {
-        margin-top: 6px;
-        margin-left: 12px;
+        width: 16px;
+        height: 16px;
     }
 
     .switch-condition {
-        text-align: center;
+        background-color: #141414;
+        padding: 12px 0;
     }
 
-    .switch-condition span {
+    .switch-condition span.room-contact,
+    .switch-condition span.user-contact{
+        display: inline-block;
+        text-align: center;
+        width: 50%;
         cursor: pointer;
         color: #808080;
         padding-top: 2px;
     }
+.switch-condition span.room-contact:active,
+.switch-condition span.room-contact:focus,
+.switch-condition span.user-contact:active,
+.switch-condition span.user-contact:focus {
+    background-color: #141414 !important;
+}
 
     span.tab-nav {
         position: relative;
-        top: 2px;
+        vertical-align: middle;
     }
 
     .switch-condition span.is-active {
@@ -161,6 +204,9 @@
     /*}*/
     .switch-condition img {
         vertical-align: middle;
+        width: 32px;
+        height: 32px;
+        margin-right: 10px;
     }
 
     .room-contact {
@@ -169,8 +215,8 @@
 
     .roomlist-unread-count {
         position: absolute;
-        right: 0;
-        top: 0;
+        right: 0px;
+        top: 5px;
         display: inline-block;
         background-color: rgb(197, 48, 72);
         border-radius: 50%;
@@ -180,14 +226,15 @@
 
     #roomList,
     #focusList {
-        width: 300px;
+        width: 100%;
         overflow: auto;
     }
 
     #roomList,
     #focusList{
-        max-height: 630px;
-        overflow-y: auto;
+        height: calc(100vh - 180px);
+        max-height: calc(100vh - 180px);
+        overflow-y: scroll;
     }
 
     .room-box {
@@ -196,7 +243,7 @@
         text-align: left;
         color: #fff;
         border-bottom: 1px solid #232323;
-        padding: 20px;
+        padding: 15px;
     }
 
     .room-box.is-active {
@@ -219,20 +266,20 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        width: 70px;
-        height: 16px;
+        width: 162px;
+        height: 24px;
     }
 
     .r-badge {
         position: absolute;
-        display: inline-block;
+        display: none;
         background: #4fe2fe;
         padding: 0;
         color: #fff;
         text-align: center;
         border-radius: 4px;
-        right: 25px;
-        bottom: 22px;
+        right: 15px;
+        bottom: 24px;
     }
 
     .sidebar-content-box .r-hide {
@@ -254,35 +301,38 @@
     }
 
     .ten-down {
-        width: 16px;
-        height: 16px;
-        line-height: 16px;
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
         border-radius: 50%;
     }
 
     .hundred-down {
-        width: 26px;
-        height: 16px;
-        line-height: 16px;
-        border-radius: 8px;
+        display: inline-block;
+        width: 33px;
+        height: 26px;
+        line-height: 26px;
+        border-radius: 13px;
     }
 
     .hundred-up {
-        width: 36px;
-        height: 16px;
-        line-height: 16px;
-        border-radius: 8px;
+        display: inline-block;
+        width: 43px;
+        height: 26px;
+        line-height: 26px;
+        border-radius: 13px;
     }
 
     .r-date {
         position: absolute;
         display: inline-block;
-        padding: 0 4px;
+        padding: 0;
         color: #fff;
         text-align: center;
         border-radius: 4px;
         color: #808080;
-        right: 20px;
+        right: 15px;
         top: 23px;
     }
 
@@ -299,8 +349,7 @@
 
     #logTitle {
         background-color: #eee;
-        height: 60px;
-        line-height: 60px;
+        height: 80px;
         border-bottom: 1px solid #ccc;
         overflow: hidden;
     }
@@ -330,41 +379,46 @@
 
     .title-info {
         position: relative;
-        padding: 0 20px;
-        height: 60px;
+        height: 80px;
+        line-height: 80px;
+        padding-left: 75px;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
     }
 
     #log {
         background: #eee;
-        height: 570px !important;
+        //height: calc(100vh - 205px);
+        height: calc(100vh - 235px);
         border-bottom: 1px solid #ccc;
     }
 
     #log .mCSB_container {
-        padding: 20px 20px 0;
+        padding: 15px 15px 0;
     }
 
     #focusDetail {
         box-sizing: border-box;
         background: #fff;
-        height: 739px;
+        height: 100vh;
         overflow: auto;
-        padding-top: 100px;
+        padding-top: 50px;
     }
 
     #form {
         position: relative;
-        background: #eee;
-        width: 900px;
-        height: 170px;
+        background: #000;
+        width: 100%;
+        height: 65px;
     }
     #userDisconnected {
-        display: inline-block;
-        position: relative;
-        background: #eee;
-        width: 900px;
-        height: 170px;
+        width: 100%;
+        height: 65px;
+        color: #fff;
+        background: #000;
     }
+
     .other-box,
     .self-box {
         margin-bottom: 20px;
@@ -392,6 +446,7 @@
 
     .content-date {
         display: inline-block;
+        width: calc(100% - 50px);
     }
 
     .other-box .content-header {
@@ -408,12 +463,12 @@
         background-color: #fff;
         padding: 10px;
         border-radius: 4px;
-        word-wrap:break-word;
+        word-wrap: break-word;
         word-break: normal;
         vertical-align: top;
-        max-width: 600px;
+        line-height: 16px;
+        max-width: calc(100% - 80px);
         color: #333;
-        line-height: 18px;
 
     }
 
@@ -473,47 +528,29 @@
         box-sizing: border-box;
         border: none;
         overflow: hidden;
-        width: 100%;
-        padding: 20px 20px 0;
-        margin-top: 20px;
-        height: 90px;
-        color: #333;
-        line-height: 18px;
-        word-wrap:break-word;
-        word-break: normal;
-        background-color: #eee;
-        overflow-y: auto;
+        width: calc(100% - 100px);
+        padding: 6px 20px;
+        margin:15px 0 16px 50px;
+        height: 30px;
+        color: #fff;
+        background-color: #4f4f4f;
+        line-height: 16px;
+        border-radius: 4px;
+        word-break: break-all;
         resize:none;
     }
-    #submitContent {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        width: 120px;
-        height: 36px;
-        line-height: 36px;
-        text-align: center;
+
+    #contentBox:empty::before {
         color: #fff;
-        border-radius: 4px;
-        background-color: #4fe2fe;
-        cursor: pointer;
+        content: attr(placeholder);
     }
 
-    #leftWords {
+#submitContent {
         position: absolute;
-        bottom: 20px;
-        right: 120px;
-        width: 120px;
-        height: 36px;
-        line-height: 36px;
+        top: 22px;
+        right: 12px;
         text-align: center;
-        color: #808080;
-    }
-
-    .chat-upload-file {
-        position: absolute;
-        bottom: 22px;
-        left: 20px;
+        color: #4fe2fe;
     }
 
     :focus {
@@ -527,18 +564,18 @@
     }
 
     .sidebar-avatar-box {
-        width: 40px;
-        height: 40px;
+        width: 65px;
+        height: 65px;
         margin-right: 10px;
     }
 
     .sidebar-content-box {
-        width: calc(100% - 55px);
+        width: calc(100% - 76px);
     }
 
     .sidebar-avatar-box img {
-        width: 40px;
-        height: 40px;
+        width: 65px;
+        height: 65px;
         border-radius: 50%;
         vertical-align: top;
     }
@@ -552,7 +589,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        height: 16px;
+        height: 18px;
         color: #808080;
     }
 
@@ -565,7 +602,7 @@
     }
 
     .content-up100 {
-        width: calc(100% - 46px) !important;
+        width: calc(100% - 52px) !important;
     }
 
     /*.room-box.is-active:hover .r-latest-bottom {*/
@@ -596,15 +633,14 @@
 
     #roomList .mCSB_scrollTools,
     #log .mCSB_scrollTools,
-    #focusList .mCSB_scrollTools{
-        width: 8px;
+    #focusList .mCSB_scrollTools {
+        width: 0px;
         opacity: 1;
     }
 
     #roomList .mCSB_scrollTools .mCSB_draggerRail,
     #focusList .mCSB_scrollTools .mCSB_draggerRail{
         background-color: #000;
-        width: 0;
     }
 
     #log .mCSB_scrollTools .mCSB_draggerRail {
@@ -616,15 +652,15 @@
     #roomList .mCSB_scrollTools .mCSB_dragger:hover .mCSB_dragger_bar,
     #focusList .mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar,
     #focusList .mCSB_scrollTools .mCSB_dragger.mCSB_dragger_onDrag .mCSB_dragger_bar,
-    #focusList .mCSB_scrollTools .mCSB_dragger:hover .mCSB_dragger_bar{
-        background-color: #404448;
+    #focusList .mCSB_scrollTools .mCSB_dragger:hover .mCSB_dragger_bar {
+        background-color: #000;
         width: 8px;
     }
 
     #log .mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar,
     #log .mCSB_scrollTools .mCSB_dragger.mCSB_dragger_onDrag .mCSB_dragger_bar,
     #log .mCSB_scrollTools .mCSB_dragger:hover .mCSB_dragger_bar {
-        background-color: #c8c8c8;
+        background-color: #eee;
         width: 8px;
     }
 
@@ -651,6 +687,7 @@
         color: #808080;
         margin-top: 80px;
         text-align: center;
+        overflow: auto;
     }
 
     .without-focus-list,
@@ -660,7 +697,7 @@
 
     /*通讯录*/
     #focusList .sidebar-content-box {
-        height: 40px;
+        height: 65px;
     }
 
     #focusList .room-box {
@@ -673,8 +710,8 @@
 
     #focusList .room-box .r-desc {
         width: 100% !important;
-        height: 40px !important;
-        line-height: 40px !important;
+        height: 65px !important;
+        line-height: 65px !important;
     }
 
     .detail-info {
@@ -687,24 +724,24 @@
     }
 
     .focus-user-image {
-        margin-bottom: 20px;
+        margin-bottom: 15px;
     }
 
     .focus-user-name {
-        font-size: 24px;
+        font-size: 22px;
         color: #000;
     }
 
     .focus-user-image img {
         display: inline-block;
-        width: 120px;
-        height: 120px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
     }
 
     .user-focus-fans {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 15px;
     }
     .user-focus-fans span {
         display: inline-block;
@@ -737,9 +774,9 @@
         text-decoration: none;
         color: #fff;
         background-color: #4fe2fe;
-        width: 120px;
-        height: 36px;
-        line-height: 36px;
+        width: 180px;
+        height: 40px;
+        line-height: 40px;
         text-align: center;
         border-radius: 4px;
     }
@@ -756,47 +793,144 @@
         background-color: #999999;
     }
 
-
-
-    #form .chat-upload-file .el-upload-list {
-        display: none !important;
+    .info-avatar {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+    }
+    .info-avatar .u-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
     }
 
-@media screen and (max-width: 1199px) {
-    #app, body, html {
-        height: auto;
+    #backRoomList {
+        position: absolute;
+        left: 15px;
+        top: 16px;
     }
-    html {
-        overflow-y: auto !important;
-    }
-    body {
-        overflow: hidden !important;
-        line-height: 1 !important;
-        min-height: 100vh !important;
+    #backRoomList .back-icon{
+        width: 25px;
+        height: 25px;
     }
 
-    #app {
-        width: 1000px;
-        height: calc(100vh - 150px);
-        min-height: 600px;
-        margin-top: 5vh;
-    }
-    #rightBox,
-    #form{
-        width: 700px;
+
+
+@media only screen and (-webkit-min-device-pixel-ratio:1.5){
+    .font-size12 {
+        font-size: 10px;
     }
 
-    #leftBox, #rightBox {
-        height: calc(95vh - 180px);
-        min-height: 600px !important;
+    .font-size14 {
+        font-size: 12px;
     }
-    #roomList, #focusList {
-        max-height: calc(100% - 180px);
+
+    .font-size15 {
+        font-size: 13px;
+    }
+
+    .font-size16 {
+        font-size: 14px;
+    }
+    .font-size17 {
+        font-size: 13px;
+    }
+
+    .font-size18 {
+        font-size: 14px;
+    }
+
+    .font-size20 {
+        font-size: 15px;
+    }
+
+    .font-size22 {
+        font-size: 16px;
+    }
+    .font-size24 {
+        font-size: 18px;
+    }
+
+    .switch-condition img{
+        width: 24px;
+        height: 24px;
+    }
+    .sidebar-avatar-box {
+        width: 50px;
+        height: 50px;
+    }
+    .sidebar-avatar-box img {
+        width: 50px;
+        height: 50px;
+    }
+    .sidebar-content-box {
+        width: calc(100% - 61px);
+    }
+    .room-box {
+        padding: 10px;
+    }
+    .room-box .r-desc {
+        height: 20px;
+    }
+    .switch-condition span.room-contact,
+    .switch-condition span.user-contact {
+        padding-top: 0;
+    }
+
+    .info-avatar .u-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    #logTitle {
+        height: 60px;
+     }
+    .title-info {
+        height: 60px;
+        line-height: 60px;
+        padding-left: 65px;
+    }
+    .info-avatar {
+        top: 10px;
+    }
+    .content-time {
+        margin-bottom: 6px;
+    }
+    .other-box, .self-box {
+        margin-bottom: 16px;
     }
     #log {
-        max-height: calc(100% - 230px) !important;
+        height: calc(100vh - 175px);
     }
-    .content-body {
-        max-width: 530px;
+    #focusList .sidebar-content-box {
+        height: 50px;
     }
+    #focusList .room-box .r-desc {
+        height: 50px !important;
+        line-height: 50px !important;
+    }
+
+    .roomlist-unread-count {
+        right: 0px;
+        top: 0px;
+    }
+
+    .hundred-down {
+        width: 28px;
+        height: 20px;
+        line-height: 20px;
+        border-radius: 10px;
+    }
+    .hundred-up {
+        width: 34px;
+        height: 20px;
+        line-height: 20px;
+        border-radius: 10px;
+    }
+    .r-badge {
+        bottom: 10px;
+    }
+}
+
+.toast-top-center {
+    top: 15% !important;
 }

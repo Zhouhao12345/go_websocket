@@ -94,7 +94,7 @@
             <template v-for="(r, index) in user_focus">
                 <div class="room-box" :class="{'is-active' : r.id==current_user_focus.id}" @click="changeUserFocus(r)">
                     <div class="sidebar-avatar-box">
-                        <img :src="image_prefix + r.avatar_image" class="user-avatar"/>
+                        <img :src="image_prefix + r.avatar_image_small" class="user-avatar"/>
                     </div>
                     <div class="sidebar-content-box">
                         <div class="r-content-top">
