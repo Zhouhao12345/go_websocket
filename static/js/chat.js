@@ -22,6 +22,7 @@ var app = new Vue({
             conn: false,
             has_connected: false,
             users: {},
+            lockReconnect: false,
         },
         created: function() {
             this.initData();
@@ -170,6 +171,14 @@ var app = new Vue({
                     }
                 }, 10000);
             },
+            reconnect: function() {
+                if(app.lockReconnect) return;
+                app.lockReconnect = true;
+                setTimeout(function () {
+                    app.websocket_start();
+                    app.lockReconnect = false;
+                }, 2000);
+            },
             websocket_start: function () {
                 if (window["WebSocket"]) {
                     var that = this;
@@ -183,7 +192,7 @@ var app = new Vue({
                         that.conn.send(objToJson(message));
                     };
                     this.conn.onclose = function () {
-                        that.handleErrorReceived("您与服务器失去联系, 请刷新页面重试");
+                        that.reconnect();
                     };
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
