@@ -116,6 +116,35 @@ func APIRegister(w http.ResponseWriter, r *http.Request)  {
 	return
 }
 
+func APILogout(w http.ResponseWriter, r *http.Request, world *World)  {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	signed, userID := tools.SingleSign(r)
+	if signed == false {
+		http.Error(w, "Please sign in firstly!", http.StatusOK)
+		return
+	}
+	member := world.members[userID]
+	world.unregisterMember <- member
+	member.mp.unregister <- member
+
+	cookieSession , err := r.Cookie(config.SESSION_COOKIE_KEY)
+	if err != nil {
+		http.Error(w, "Cookie Lost", http.StatusServiceUnavailable)
+		return
+	}
+	err2 := cache.Client.Del("session:"+ cookieSession.Value).Err()
+	if err2 != nil {
+		http.Error(w, "Session Lost", http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tools.ApiJsonNormalization(make([]map[string]string, 0), 0, "success"))
+	return
+}
+
 func APIUserDetail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

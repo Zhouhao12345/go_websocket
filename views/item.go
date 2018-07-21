@@ -15,8 +15,8 @@ func NewItem(m *Map) *Item {
 		image: "",
 		kind: "",
 		pos:Position{
-			x:"",
-			y:""},
+			x:0,
+			y:0},
 	}
 }
 

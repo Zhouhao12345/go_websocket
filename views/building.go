@@ -15,7 +15,7 @@ func NewBuilding(m *Map) *Building {
 		image: "",
 		kind: "",
 		pos: Position{
-			x:"",
-			y:""},
+			x:0,
+			y:0},
 	}
 }

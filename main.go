@@ -32,6 +32,9 @@ func main() {
 	// api
 	http.HandleFunc("/api/user", views.APIUser)
 	http.HandleFunc("/api/user/login", views.APILogin)
+	http.HandleFunc("/api/user/logout", func(w http.ResponseWriter, r *http.Request) {
+		views.APILogout(w, r, world)
+	})
 	http.HandleFunc("/api/user/register", views.APIRegister)
 	http.HandleFunc("/api/user/detail", views.APIUserDetail)
 	//http.HandleFunc("/api/user/characters/list", views.APIUserCharacterList)

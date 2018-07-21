@@ -10,6 +10,7 @@ import (
 	"go_ws/models"
 	"encoding/json"
 	"go_ws/error_ws"
+	"strconv"
 )
 
 const (
@@ -41,6 +42,8 @@ type Member struct {
 	world *World
 	mp *Map
 
+	pos Position
+
 	username string
 	user string
 	image string
@@ -50,9 +53,11 @@ type Member struct {
 
 	// Buffered channel of outbound messages.
 	mapEnter chan *Member
+	mapLeave chan *Member
 	move chan map[string]string
 	test_connect chan []byte
 	receive_error chan []byte
+	mpInit chan *Map
 }
 
 func (m *Member) readPump() {
@@ -81,9 +86,11 @@ func (m *Member) readPump() {
 					messageFullByte := []byte(m.user)
 					m.test_connect <- messageFullByte
 				case "move":
-					position := event["data"].(map[string]string)
-					positionX := position["x"]
-					positionY := position["y"]
+					position := event["data"].(map[string]interface{})
+					positionX := position["x"].(string)
+					positionY := position["y"].(string)
+					m.pos.x , _ = strconv.Atoi(positionX)
+					m.pos.y , _ = strconv.Atoi(positionY)
 					m.mp.move <- map[string]string{
 						"user": m.user,
 						"x": positionX,
@@ -93,14 +100,15 @@ func (m *Member) readPump() {
 					if m.mp.name != "None" {
 						m.mp.unregister <- m
 					}
-					randNum := tools.GenerateRandomNumber(100)
-					if v := randNum % 2; v==0 || len(m.world.maps) == 0{
+					//randNum := tools.GenerateRandomNumber(100)
+					//v := randNum % 2; v==0 ||
+					maps := m.world.maps
+					if len(maps) == 0{
 						empty_map := newMap(m.world)
 						m.world.register <- empty_map
 						m.mp = empty_map
 						m.mp.register <- m
 					} else {
-						maps := m.world.maps
 						randNumLen := tools.GenerateRandomNumber(len(maps))
 						for mp , _ := range maps {
 							if randNumLen == 0 {
@@ -176,6 +184,7 @@ func (m *Member) writePump() {
 				// Add queued chat messages to the current websocket message.
 				n := len(m.move)
 				for i := 0; i < n; i++ {
+					moveDate = <-m.move
 					messageArrays = append(messageArrays, map[string]string{
 						"user": moveDate["user"],
 						"x": moveDate["x"],
@@ -214,6 +223,7 @@ func (m *Member) writePump() {
 				// Add queued chat messages to the current websocket message.
 				n := len(m.mapEnter)
 				for i := 0; i < n; i++ {
+					member = <-m.mapEnter
 					messageArrays = append(messageArrays, map[string]string{
 						"user": member.user,
 						"image": member.image,
@@ -221,6 +231,118 @@ func (m *Member) writePump() {
 					})
 				}
 				messageData["method"] = "mapEnter"
+				messageData["data"] = messageArrays
+				encoder := json.NewEncoder(w)
+				encoder.SetEscapeHTML(false)
+				encoder.Encode(messageData)
+				if err := w.Close(); err != nil {
+					return
+				}
+			case member, ok := <-m.mapLeave:
+				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if !ok {
+					// The hub closed the channel.
+					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+
+				w, err := m.conn.NextWriter(websocket.TextMessage)
+				if err != nil {
+					return
+				}
+
+				messageData := make(map[string]interface{})
+				messageArrays := make([]map[string]string, 0)
+				messageArrays = append(messageArrays, map[string]string{
+					"user": member.user,
+					"username": member.username,
+				})
+				// Add queued chat messages to the current websocket message.
+				n := len(m.mapLeave)
+				for i := 0; i < n; i++ {
+					member = <-m.mapLeave
+					messageArrays = append(messageArrays, map[string]string{
+						"user": member.user,
+						"username": member.username,
+					})
+				}
+				messageData["method"] = "mapLeave"
+				messageData["data"] = messageArrays
+				encoder := json.NewEncoder(w)
+				encoder.SetEscapeHTML(false)
+				encoder.Encode(messageData)
+				if err := w.Close(); err != nil {
+					return
+				}
+			case mp, ok := <-m.mpInit:
+				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
+				if !ok {
+					// The hub closed the channel.
+					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
+					return
+				}
+
+				w, err := m.conn.NextWriter(websocket.TextMessage)
+				if err != nil {
+					return
+				}
+
+				messageData := make(map[string]interface{})
+				messageArrays := make([]map[string]interface{}, 0)
+				items := make([]string, 0)
+				buildings := make([]string, 0)
+				members := make([]map[string]interface{}, 0)
+				for _ ,item := range mp.items {
+					items = append(items, item.name)
+				}
+				for _ ,building := range mp.buildings {
+					buildings = append(buildings, building.name)
+				}
+				for _ ,member := range mp.members {
+					members = append(members, map[string]interface{}{
+						"name": member.username,
+						"id": member.user,
+						"image": member.image,
+						"positionX": member.pos.x,
+						"positionY": member.pos.y,
+					})
+				}
+				messageArrays = append(messageArrays, map[string]interface{}{
+					"mapName": mp.name,
+					"items": items,
+					"members": members,
+					"buildings": buildings,
+				})
+				// Add queued chat messages to the current websocket message.
+				n := len(m.mpInit)
+				for i := 0; i < n; i++ {
+					mp = <-m.mpInit
+					items = make([]string, 0)
+					buildings = make([]string, 0)
+					members = make([]map[string]interface{}, 0)
+					for _ ,item := range mp.items {
+						items = append(items, item.name)
+					}
+					for _ ,building := range mp.buildings {
+						buildings = append(buildings, building.name)
+					}
+					for _ ,member := range mp.members {
+						members = append(members, map[string]interface{}{
+							"name": member.username,
+							"id": member.user,
+							"image": member.image,
+							"positionX": member.pos.x,
+							"positionY": member.pos.y,
+						})
+					}
+					messageArrays = append(messageArrays, map[string]interface{}{
+						"mapName": mp.name,
+						"items": items,
+						"members": members,
+						"buildings": buildings,
+					})
+				}
+				messageData["method"] = "mapInit"
 				messageData["data"] = messageArrays
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
@@ -300,13 +422,18 @@ func ServeWs(w http.ResponseWriter, r *http.Request, world *World)  {
 	member := &Member{
 		world: world,
 		conn: conn,
+		mpInit:make(chan *Map),
 		mp:mp,
+		pos:Position{
+			x:50,
+			y:50},
 		user: userId,
 		username:userRow[0]["username"],
 		image:userRow[0]["image"],
 		test_connect:make(chan []byte,256),
 		move:make(chan map[string]string),
 		mapEnter:make(chan *Member),
+		mapLeave:make(chan *Member),
 		receive_error:make(chan []byte,256),
 	}
 	member.world.registerMember <- member

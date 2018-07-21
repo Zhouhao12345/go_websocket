@@ -51,7 +51,6 @@ func (h *Map) run() {
 	for {
 		select {
 		case membernew := <-h.register:
-			h.members[membernew.user] = membernew
 			for memberID, member := range h.members {
 				select {
 				case member.mapEnter <- membernew:
@@ -63,9 +62,22 @@ func (h *Map) run() {
 					delete(h.members, memberID)
 				}
 			}
-		case member := <-h.unregister:
-			if _, ok := h.members[member.user]; ok {
-				delete(h.members, member.user)
+			h.members[membernew.user] = membernew
+			membernew.mpInit <- h
+		case memberLeave := <-h.unregister:
+			if _, ok := h.members[memberLeave.user]; ok {
+				delete(h.members, memberLeave.user)
+				for memberID, member := range h.members {
+					select {
+					case member.mapLeave <- memberLeave:
+					default:
+						close(member.move)
+						close(member.mapEnter)
+						close(member.test_connect)
+						close(member.receive_error)
+						delete(h.members, memberID)
+					}
+				}
 			}
 		case moveData := <-h.move:
 			for memberID, member := range h.members {

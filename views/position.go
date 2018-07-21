@@ -1,7 +1,7 @@
 package views
 
 type Position struct {
-	x string
-	y string
+	x int
+	y int
 }
 

@@ -41,7 +41,20 @@ var app = new Vue({
                 $(".RegisterFrame").hide();
             },
             logout: function(){
-
+                var that = this;
+                $.ajax("/api/user/logout", {
+                    data: {},
+                    dataType: 'json',
+                    type: 'GET',
+                    success: function(response) {
+                        if(response.return_code==0) {
+                            toastr.success("Logout Success");
+                            window.location.reload();
+                        } else {
+                            toastr.warning(response.result);
+                        }
+                    }
+                });
             },
             Register: function(){
                 if(this.username.length===0){
@@ -100,6 +113,28 @@ var app = new Vue({
                 } else {
                     this.isMobile = 'yes';
                 }
+                var that = this;
+                document.onkeydown = function(){
+                    var left = parseInt($("#user"+that.selfInfo.id.toString()).css("left").split("%")[0]);
+                    var top = parseInt($("#user"+that.selfInfo.id.toString()).css("top").split("%")[0]);
+                    var key = window.event.keyCode;
+                    // left
+                    if(key == 37){
+                        that.move(left-1,top);
+                    }
+                    // top
+                    if(key == 38){
+                        that.move(left, top-1);
+                    }
+                    // right
+                    if(key == 39){
+                        that.move(left+1,top);
+                    }
+                    // down
+                    if(key == 40){
+                        that.move(left, top+1);
+                    }
+                }
             },
             get_user: function () {
                 var that = this;
@@ -153,7 +188,6 @@ var app = new Vue({
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
                         var msg = jsonToObj(messages[0]);
-                        console.log(msg);
                         switch (msg.method) {
                             case 'test_connect':
                                 that.handleTestConnect(msg);
@@ -161,11 +195,17 @@ var app = new Vue({
                             case 'mapEnter':
                                 that.handleMapEnter(msg);
                                 break;
+                            case 'mapInit':
+                                that.handleMapInit(msg);
+                                break;
                             case 'move':
                                 that.handleMove(msg);
                                 break;
                             case 'error_received':
                                 that.handleErrorReceived(msg.data[0].error + ",请刷新页面重试");
+                                break;
+                            case 'mapLeave':
+                                that.handleMapLeave(msg);
                                 break;
                             default:break;
                         }
@@ -191,6 +231,27 @@ var app = new Vue({
                     app.user = parseInt(msg.data[0]);
                 });
             },
+            handleMapInit: function(msg) {
+                Vue.nextTick(function() {
+                    var members = msg.data[0].members;
+                    for(var i=0;i<members.length;i++)
+                    {
+                        app.users[members[i].id] = {
+                            username : members[i].name,
+                            image : members[i].image,
+                        };
+                        $("#rightBox").append(
+                            "<span id='user"+members[i].id+"' style='" +
+                            "font-size: 50px; " +
+                            "text-align: center; " +
+                            "background-color: red; " +
+                            "position: relative; " +
+                            "left: "+members[i].positionX+"%; " +
+                            "top: "+members[i].positionY+"%;'>" + members[i].name +"</span>"
+                        );
+                    }
+                })
+            },
             handleMapEnter: function(msg) {
                 Vue.nextTick(function(){
                     if(app.users[msg.data[0].user]==undefined)
@@ -198,21 +259,32 @@ var app = new Vue({
                         app.users[msg.data[0].user] = {
                             username : msg.data[0].username,
                             image : msg.data[0].image,
-                            positions: {
-                                x: 100,
-                                y: 100,
-                            }
                         };
                         $("#rightBox").append(
-                            "<span style='font-size: 50px; text-align: center; background-color: red'>" + msg.data[0].username +"</span>"
+                            "<span id='user"+msg.data[0].user+"' style='" +
+                            "font-size: 50px; " +
+                            "text-align: center; " +
+                            "background-color: red; " +
+                            "position: relative; " +
+                            "left: 50%; " +
+                            "top: 50%;'>" + msg.data[0].username +"</span>"
                         );
+                    } else {
+                        $("#user"+msg.data[0].user).css("left", "50%");
+                        $("#user"+msg.data[0].user).css("top", "50%");
                     }
                 });
             },
             handleMove: function(msg) {
                 Vue.nextTick(function(){
-                    app.users[msg["user"]]["positions"]["x"] = msg["x"];
-                    app.users[msg["user"]]["positions"]["y"] = msg["y"];
+                    $("#user"+msg.data[0].user).css("left", msg.data[0].x+"%");
+                    $("#user"+msg.data[0].user).css("top", msg.data[0].y+"%");
+                });
+            },
+            handleMapLeave: function(msg) {
+                Vue.nextTick(function(){
+                    delete app.users[msg.data[0].user];
+                    $("#user"+msg.data[0].user).remove();
                 });
             },
             enterMap: function () {
@@ -221,12 +293,12 @@ var app = new Vue({
                     data:{}
                 });
             },
-            move: function () {
+            move: function (left,top) {
                 this.submitCommand({
                     method: 'move',
                     data:{
-                        x: 100,
-                        y: 100,
+                        x: left.toString(),
+                        y: top.toString(),
                     }
                 });
             },
