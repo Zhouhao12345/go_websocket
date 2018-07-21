@@ -107,6 +107,7 @@ func (m *Member) readPump() {
 					maps := m.world.maps
 					if len(maps) == 0{
 						empty_map := newMap(m.world)
+						empty_map.name = "Hello World"
 						m.world.register <- empty_map
 						m.mp = empty_map
 						m.mp.register <- m
