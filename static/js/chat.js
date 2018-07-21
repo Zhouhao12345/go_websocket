@@ -175,7 +175,7 @@ var app = new Vue({
                 if(app.lockReconnect) return;
                 app.lockReconnect = true;
                 setTimeout(function () {
-                    app.websocket_start();
+                    app.get_user();
                     app.lockReconnect = false;
                 }, 2000);
             },
