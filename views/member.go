@@ -86,15 +86,17 @@ func (m *Member) readPump() {
 					messageFullByte := []byte(m.user)
 					m.test_connect <- messageFullByte
 				case "move":
-					position := event["data"].(map[string]interface{})
-					positionX := position["x"].(string)
-					positionY := position["y"].(string)
-					m.pos.x , _ = strconv.Atoi(positionX)
-					m.pos.y , _ = strconv.Atoi(positionY)
-					m.mp.move <- map[string]string{
-						"user": m.user,
-						"x": positionX,
-						"y": positionY,
+					if m.mp.name != "None" {
+						position := event["data"].(map[string]interface{})
+						positionX := position["x"].(string)
+						positionY := position["y"].(string)
+						m.pos.x , _ = strconv.Atoi(positionX)
+						m.pos.y , _ = strconv.Atoi(positionY)
+						m.mp.move <- map[string]string{
+							"user": m.user,
+							"x": positionX,
+							"y": positionY,
+						}
 					}
 				case "enter_map":
 					if m.mp.name != "None" {
