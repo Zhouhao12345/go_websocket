@@ -238,26 +238,25 @@ var app = new Vue({
                             "top: "+members[i].positionY+"%;'>" + members[i].name +"</span>"
                         );
                     }
-                    var that = this;
                     document.onkeydown = function(){
-                        var left = parseInt($("#user"+that.selfInfo.id.toString()).css("left").split("%")[0]);
-                        var top = parseInt($("#user"+that.selfInfo.id.toString()).css("top").split("%")[0]);
+                        var left = parseInt($("#user"+app.selfInfo.id.toString()).css("left").split("%")[0]);
+                        var top = parseInt($("#user"+app.selfInfo.id.toString()).css("top").split("%")[0]);
                         var key = window.event.keyCode;
                         // left
                         if(key == 37){
-                            that.move(left-1,top);
+                            app.move(left-1,top);
                         }
                         // top
                         if(key == 38){
-                            that.move(left, top-1);
+                            app.move(left, top-1);
                         }
                         // right
                         if(key == 39){
-                            that.move(left+1,top);
+                            app.move(left+1,top);
                         }
                         // down
                         if(key == 40){
-                            that.move(left, top+1);
+                            app.move(left, top+1);
                         }
                     }
                 })
