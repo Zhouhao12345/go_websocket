@@ -9,203 +9,47 @@
 </head>
 <body>
     <div id="app" v-cloak>
-        <div id="leftBox">
-            <div id="currentUserInfo">
-                <img class="current-user-avatar" :src="image_prefix + selfInfo.avatar_image_small" v-lazy="image_prefix + selfInfo.avatar_image_small">
-                <span class="current-user-name font-size18" v-if="selfInfo.username.length>7">{{ selfInfo.username.substring(0, 7) +  "..." }}</span>
-                <span class="current-user-name font-size18" v-else>{{selfInfo.username}}</span>
-                <a href="http://www.ggac.net" target="_self"><img class="current-back" src="static/image/chat_left_back.png"></a>
-            </div>
-            <div id="searchBox">
-                    <div class="search-input" v-if="isMobile=='yes'">
-                        <input type="text" name="search" class="form-input-style" v-model="search_data" placeholder="搜索">
-                        <span class="search-icon" @click="submitSearch"><img src="http://cdn.ggac.net/images/seacher_icon.png"></span>
-                    </div>
-                    <div class="search-input" v-else>
-                        <input type="text" name="search" class="form-input-style" v-model="search_data" placeholder="搜索">
-                        <span class="search-icon" @click="submitSearch"><img src="http://cdn.ggac.net/images/seacher_icon.png"></span>
-                    </div>
-                    <div class="switch-condition">
-                        <span class="room-contact font-size18" :class="{'is-active' : navbar_type=='room_list'}" @click="get_room_list(false,search_data)">
-                            <img src="static/image/room_on.png" v-if="navbar_type=='room_list'" />
-                            <img src="static/image/room_off.png" v-else />
-                            <span class="tab-nav">私信</span>
-                            <span class="roomlist-unread-count font-size12" v-if="room_list_unread_count>0"></span>
-                        </span>
-                        <span class="tab-divider"></span>
-                        <span class="user-contact font-size18" :class="{'is-active' : navbar_type=='focus_list'}" @click="get_user_focus_list()">
-                            <img src="static/image/focus_on.png" v-if="navbar_type=='focus_list'" />
-                            <img src="static/image/focus_off.png" v-else />
-                            <span class="tab-nav">通讯录</span>
-                        </span>
-                    </div>
-                </div>
-                <div id="roomList">
-                    <div v-show="navbar_type=='room_list'" :class="{'without-room-list' : rooms.length==0}">
-                    <template v-for="(r, index) in rooms">
-                        <div class="room-box" :class="{'is-active' : r.isActive}"  @click="changeRoom(r.rid)">
-                            <div class="sidebar-avatar-box">
-                                <img :src="image_prefix + r.images"  class="user-avatar"/>
-                            </div>
-                            <div class="sidebar-content-box">
-                                <div class="r-content-top">
-                                    <span class="font-size14 r-desc">{{ r.des }}</span>
-                                    <span class="font-size14 r-date" >{{ r.create_date.split('.')[0].substring(11, 16) }}</span>
-                                </div>
-                                <template v-if="r.unread==0">
-                                    <div class="font-size14 r-latest-bottom">{{r.content}}</div>
-                                </template>
-                                <template v-if="r.unread>0 && r.unread<10">
-                                    <div class="font-size14 r-latest-bottom content-up10">{{r.content}}</div>
-                                </template>
-                                <template v-if="r.unread>=10 && r.unread<100">
-                                    <div class="font-size14 r-latest-bottom content-down100">{{r.content}}</div>
-                                </template>
-                                <template v-if="r.unread>=100">
-                                    <div class="font-size14 r-latest-bottom content-up100" v-html="r.content"></div>
-                                </template>
-                                <template v-if="r.unread>0">
-                                    <span class="font-size12 r-badge ten-down" v-if="r.unread<10">{{ r.unread }}</span>
-                                    <span class="font-size12 r-badge hundred-down" v-if="r.unread>=10 && r.unread<100">{{ r.unread }}</span>
-                                    <span class="font-size12 r-badge hundred-up" v-if="r.unread>=100">99+</span>
-                                </template>
-                                <!--<span class="font-size12 r-hide ten-down" @click.stop="hideRoom(r.rid)"><img src="static/image/room_hide.png"></span>-->
-                                <!--<span class="font-size14 r-remove" @click.stop="deleteRoom(r.rid)">X</span>-->
-                            </div>
-                        </div>
-                    </template>
-                    <template v-if="rooms.length==0">
-                        <div class="without-data font-size18">暂无任何私信</div>
-                    </template>
-                    </div>
-                </div>
-                <div id="focusList">
-                    <div  v-show="navbar_type=='focus_list'" :class="{'without-focus-list' : user_focus.length==0}">
-                        <template v-for="(r, index) in user_focus">
-                        <div class="room-box" :class="{'is-active' : r.id==current_user_focus.id}" @click="changeUserFocus(r)">
-                            <div class="sidebar-avatar-box">
-                                <img :src="image_prefix + r.avatar_image_small" class="user-avatar"/>
-                            </div>
-                        <div class="sidebar-content-box">
-                        <div class="r-content-top">
-                        <span class="font-size14 r-desc">{{ r.username }}</span>
-                        </div>
-                        </div>
-                        </div>
-                        </template>
-                        <template v-if="user_focus.length==0">
-                            <div class="without-data font-size18">暂无任何关注</div>
-                        </template>
-                    </div>
-                </div>
+        <div id="topBox">
+            <ul>
+                <template v-if="selfInfo.id == 0">
+                    <li><a href="javascript:;" @click="showLoginFrame">登录</a></li>
+                    <li><a href="javascript:;" @click="showRegisterFrame">注册</a></li>
+                </template>
+                <template v-else>
+                    <li>{{selfInfo.username}}</li>
+                    <li><a href="javascript:;" @click="logout">登出</a></li>
+                </template>
+            </ul>
         </div>
         <div id="rightBox">
-                <div id="logTitle">
-                    <div class="title-info" v-show="navbar_type=='room_list'">
-                        <span class="info-name font-size18" v-if="current_room.des.length>20">{{ current_room.des.substr(0, 20) }}</span>
-                        <span class="info-name font-size18" v-else>{{ current_room.des }}</span>
-                        <!--
-                        <span class="info-delete font-size14">
-                            <img class="dropmenu-icon1" src="static/image/dropmenu_icon1.png">
-                            <img class="dropmenu-icon2" src="static/image/dropmenu_icon2.png">
-                        </span>
-                        -->
-                    </div>
-                    <div class="detail-info font-size18" v-show="navbar_type=='focus_list' && user_focus.length>0">详细信息</div>
-                </div>
-                <div id="log" v-show="navbar_type=='room_list'">
-                    <div v-for="message in messages">
-                        <div class="self-box" v-if="parseInt(selfInfo.id)==parseInt(message.from_uid)">
-                            <div class="content-date">
-                                <span class="font-size12 content-time">{{ reformCreateDate(message.create_date.split('.')[0]) }}</span>
-                                <span class="font-size14 content-body" v-html="message.content"></span>
-                            </div>
-                            <span class="content-header">
-                                <a :href="'http://www.ggac.net/user/center/home/' + message.from_uid" target="_blank">
-                                    <img :src="image_prefix + message.image"  class="user-avatar" />
-                                </a>
-                            </span>
-                        </div>
-                        <div class="other-box" v-else>
-                            <span class="content-header">
-                                <a :href="'http://www.ggac.net/user/center/home/' + message.from_uid" target="_blank">
-                                    <img :src="image_prefix + message.image"  class="user-avatar" />
-                                </a>
-                            </span>
-                            <div class="content-date">
-                                <span class="font-size12 content-time">{{ reformCreateDate(message.create_date.split('.')[0]) }}</span>
-                                <span class="font-size14 content-body" v-html="message.content"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <span id="userDisconnected" class="font-size18" v-if="!has_connected" style="display: inline-block;"></span>
-                <span id="form" v-show="navbar_type=='room_list'  && has_connected" style="display: inline-block;">
-                    <!--
-                    <div class="emoji-container" style="min-height: 30px;display: none;">
-                        <span class="dismiss-emoji font-size12" onclick="dismissContainer()">X</span>
-                        <table border="0" cellspacing="0" cellpadding="0">
-                            <tbody>
-                            <tr v-for="(rows, r_index) in emojiss">
-                                <td v-for="(col, c_index) in rows">
-                                    <div class="emojis-item">
-                                        <img :src="'http://pre-cdn.ggac.net/images/arclist/' + col + '.gif'" onclick="chatInertEmoji(event)" :_img_number="col">
-                                    </div>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    -->
-                    <textarea id="contentBox" name="saytext" class="font-size14" v-model="desc" oninput="if(this.value.length>400){this.value=this.value.slice(0,400);toastr.warning('输入内容不能超出400字符');return false;}"  @input="descInput" @keypress.enter="submitContent($event)"></textarea>
-                    <!--<div id="contentBox" name="saytext" class="font-size14" contentEditable="plaintext-only" onpaste="toastr.warning('禁止粘贴数据');return false;" tabindex="0"></div>-->
-                    <!--<img class="choose-img-btn" src="http://pre-cdn.ggac.net/images/fourm_face.png" onclick="chatChooseEmoji(event)">-->
-                    <!--文件上传
-                        <el-upload
-                                class="chat-upload-file"
-                                ref="upload"
-                                action="http://XXX/"
-                                multiple="false"
-                                :on-preview="handlePreview"
-                                :on-remove="handleRemove"
-                                :on-progress="handleProgress"
-                                :on-success="handleSuccess"
-                                :show-file-list="false"
-                                :auto-upload="true">
-                      <el-button slot="trigger" size="small" type="primary">选取文件</el-button>
-                    </el-upload>
-                    -->
-                    <span id="leftWords" class="font-size14">{{remnant}}/400</span>
-                    <span id="submitContent" class="font-size14" @click="submitContent">发送</span>
-                </span>
-                <div id="focusDetail" v-show="navbar_type=='focus_list'">
-                    <template v-if="user_focus.length>0">
-                        <div class="focus-user-image font-size14">
-                            <img :src="image_prefix + current_user_focus.avatar_image_small" />
-                        </div>
-                        <div class="focus-user-name">{{current_user_focus.username}}</div>
-                        <div class="user-focus-fans">
-                            <span class="focus-num font-size14">{{current_user_focus.num_focus}}&nbsp;关注</span>
-                            <span class="focus-number-divider"></span>
-                            <span class="fans-num font-size14">{{current_user_focus.num_focused}}&nbsp;粉丝</span>
-                        </div>
-                        <div class="operate-box">
-                            <div>
-                                <a href="javascript:;" class="focus-send-msg font-size14" @click="sendUserFocus">发信息</a>
-                            </div>
-                            <div>
-                                <a :href="'http://www.ggac.net/user/center/home/' + current_user_focus.id" target="_blank" class="focus-check-work font-size14">查看作品</a>
-                            </div>
-                            <div>
-                                <a href="javascript:;" class="focus-cancle-attention font-size14" v-if="current_user_focus.is_focused" @click="cancelFocusUser(current_user_focus.id)">取消关注</a>
-                                <a href="javascript:;" class="focus-attention font-size14" v-else @click="focusUser(current_user_focus.id)">关注</a>
-                            </div>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <!--<div class="font-size14">您还没有关注人</div>-->
-                    </template>
-                </div>
+        </div>
+        <div class="loginFrame">
+            <div class="form-top">
+                <a class="close-btn" href="javascript:;" @click="closeLoginFrame">关闭</a>
+            </div>
+            <div class="form-group">
+                <label for="username" class="username">用户名</label>
+                <input id="username" v-model="username" name="username" maxlength="20" class="form-control form-lr-input-style" type="text">
+            </div>
+            <div class="form-group">
+                <label for="password" class="password">密码</label>
+                <input id="password" v-model="password" name="password" class="form-control form-lr-input-style" type="password">
+            </div>
+            <a type="submit" href="javascript:;" class="submit-btn" @click="login">登录</a>
+        </div>
+        <div class="RegisterFrame">
+            <div class="form-top">
+                <a class="close-btn" href="javascript:;" @click="closeRegisterFrame">关闭</a>
+            </div>
+            <div class="form-group">
+                <label for="username" class="username">用户名</label>
+                <input id="username" v-model="username" name="username" maxlength="20" class="form-control form-lr-input-style" type="text">
+            </div>
+            <div class="form-group">
+                <label for="password" class="password">密码</label>
+                <input id="password" v-model="password" name="password" class="form-control form-lr-input-style" type="password">
+            </div>
+            <a type="submit" href="javascript:;" class="submit-btn" @click="Register">注册</a>
         </div>
     </div>
 </body>

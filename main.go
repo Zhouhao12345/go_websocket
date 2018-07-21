@@ -18,32 +18,25 @@ var addr = flag.String("addr", config.HOSTNAME+":"+config.PORT, "http service ad
 func main() {
 	flag.Parse()
 	runtime.GOMAXPROCS(4)
-	threate := views.NewTheatre()
-	go threate.Run()
+	world := views.NewWorld()
+	go world.Run()
 
 	// view
 	http.HandleFunc("/home", views.ServeHome)
-	http.HandleFunc("/home_mb", views.ServeHomeMb)
 	http.HandleFunc("/login", views.ServeLogin)
 
-	// web socket
-	//http.HandleFunc("/ws_message", func(w http.ResponseWriter, r *http.Request) {
-	//	views.Ws(w,r,threate)
-	//})
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		views.Ws(w,r,threate)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		views.Ws(w,r,world)
 	})
 
 	// api
 	http.HandleFunc("/api/user", views.APIUser)
+	http.HandleFunc("/api/user/login", views.APILogin)
+	http.HandleFunc("/api/user/register", views.APIRegister)
 	http.HandleFunc("/api/user/detail", views.APIUserDetail)
-	http.HandleFunc("/api/user/focused/list", views.APIUserFocused)
-	http.HandleFunc("/api/user/focused/cancel", views.APIUserFocusedCancel)
-	http.HandleFunc("/api/user/focused/agree", views.APIUserFocusedAgree)
-
-	http.HandleFunc("/api/room/list", views.APIRoom)
-	http.HandleFunc("/api/room/create", views.APIRoomCreate)
-	http.HandleFunc("/api/room/message/list", views.APIMessage)
+	//http.HandleFunc("/api/user/characters/list", views.APIUserCharacterList)
+	//http.HandleFunc("/api/user/characters/detail", views.APIUserCharacterDetail)
+	//http.HandleFunc("/api/user/friends/list", views.APIFriendList)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatalln(err)

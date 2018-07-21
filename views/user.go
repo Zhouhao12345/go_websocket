@@ -6,6 +6,11 @@ import (
 	"encoding/json"
 	"go_ws/models"
 	"log"
+	"github.com/satori/go.uuid"
+	"go_ws/config"
+	"go_ws/cache"
+	"encoding/base64"
+	"time"
 )
 
 func APIUser(w http.ResponseWriter, r *http.Request) {
@@ -19,9 +24,7 @@ func APIUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userRaw, err := models.SelectQuery(
-		"select users.id, users.username, gusers.avatar_image_small from auth_user as users " +
-			"inner join web_ggacuser as gusers on gusers.user_ptr_id = users.id " +
-			"where users.id = ?", userId)
+		"select users.id, users.username, users.avatar_image from users where users.id = ?", userId)
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, "DB ERROR", http.StatusInternalServerError)
@@ -29,6 +32,87 @@ func APIUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tools.ApiJsonNormalization(userRaw, 0, "success"))
+	return
+}
+
+func APILogin(w http.ResponseWriter, r *http.Request)  {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	result , err := models.SelectQuery(
+		"select id , password from users where username = ?", username)
+	if err != nil {
+		log.Printf(err.Error());
+		http.Error(w, "DB ERROR", http.StatusServiceUnavailable)
+		return
+	}
+
+	if len(result) == 0 {
+		json.NewEncoder(w).Encode(
+			tools.ApiJsonNormalization(
+				make([]map[string]string, 0), -1, "帐号不存在"))
+		return
+	}
+
+	current_password , err := base64.StdEncoding.DecodeString(result[0]["password"])
+	if password != string(current_password) {
+		json.NewEncoder(w).Encode(
+			tools.ApiJsonNormalization(
+				make([]map[string]string, 0), -2, "密码错误"))
+		return
+	}
+
+	sessionKey := uuid.Must(uuid.NewV4()).String()
+	err1 := cache.Client.HSet("session:"+ sessionKey, "id", result[0]["id"]).Err()
+	if err1 != nil {
+		log.Printf(err.Error());
+		http.Error(w, "Cache ERROR", http.StatusServiceUnavailable)
+		return
+	}
+	err2 := cache.Client.Expire("session:"+ sessionKey, config.SESSION_MAX_AGE * time.Second).Err()
+	if err2 != nil {
+		log.Printf(err.Error());
+		http.Error(w, "Cache ERROR", http.StatusServiceUnavailable)
+		return
+	}
+
+	cookie := http.Cookie{
+		Name: config.SESSION_COOKIE_KEY,
+		Value: sessionKey,
+		Domain: config.DOMAIN ,
+		Path: "/",
+		HttpOnly: true,
+		MaxAge: config.SESSION_MAX_AGE}
+	http.SetCookie(w, &cookie)
+	json.NewEncoder(w).Encode(tools.ApiJsonNormalization(make([]map[string]string, 0), 0, "success"))
+	return
+}
+
+func APIRegister(w http.ResponseWriter, r *http.Request)  {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	password_base64 := base64.StdEncoding.EncodeToString([]byte(password))
+	_ , err := models.InsertQuery(
+		"insert into users (username , password ) VALUES (? , ?)", username, password_base64)
+	if err != nil {
+		log.Printf(err.Error());
+		http.Error(w, "DB ERROR", http.StatusServiceUnavailable)
+		return
+	}
+	json.NewEncoder(w).Encode(tools.ApiJsonNormalization(make([]map[string]string, 0), 0, "success"))
 	return
 }
 
@@ -42,17 +126,9 @@ func APIUserDetail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Please sign in firstly!", http.StatusOK)
 		return
 	}
-	focuseuserId := r.FormValue("user_id")
+	//_ := r.FormValue("user_id")
 	userRaws, err := models.SelectQuery(
-		"select users.id, users.username, gusers.avatar_image_small, " +
-			"IFNULL(k.num_focus, 0) as num_focus, IFNULL(n.num_focused,0) as num_focused " +
-			"from auth_user as users " +
-			"inner join web_ggacuser as gusers on gusers.user_ptr_id = users.id " +
-			"left join ( select user_id, count(id) as num_focus " +
-				"from web_focus where disable = 0 group by user_id) as k on k.user_id = users.id " +
-			"left join ( select focus_user_id, count(id) as num_focused " +
-				"from web_focus where disable = 0 group by focus_user_id) as n on n.focus_user_id = users.id " +
-			"where users.id = ? group by users.id", focuseuserId)
+		"select users.id, users.username, users.avatar_image from users")
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, "DB ERROR", http.StatusInternalServerError)

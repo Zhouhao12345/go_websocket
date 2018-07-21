@@ -16,6 +16,6 @@ import (
 //	}
 //}
 
-func Ws(w http.ResponseWriter, r *http.Request, theatre *Theatre)  {
-	ServeWs(w, r, theatre)
+func Ws(w http.ResponseWriter, r *http.Request, world *World)  {
+	ServeWs(w, r, world)
 }

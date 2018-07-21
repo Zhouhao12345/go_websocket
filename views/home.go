@@ -11,11 +11,11 @@ func ServeHome(w http.ResponseWriter, r *http.Request)  {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	signed, _ := tools.SingleSign(r)
-	if signed == false {
-		http.Redirect(w,r,"/login?next="+r.RequestURI, http.StatusFound)
-		return
-	}
+	//signed, _ := tools.SingleSign(r)
+	//if signed == false {
+	//	http.Redirect(w,r,"/login?next="+r.RequestURI, http.StatusFound)
+	//	return
+	//}
 	http.ServeFile(w, r, config.HOME_TEMPLATE)
 }
 

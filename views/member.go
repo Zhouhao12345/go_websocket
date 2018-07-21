@@ -8,7 +8,6 @@ import (
 	"log"
 	"bytes"
 	"go_ws/models"
-	"strings"
 	"encoding/json"
 	"go_ws/error_ws"
 )
@@ -39,8 +38,8 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Member struct {
-	theatre *Theatre
-	hub *Hub
+	world *World
+	mp *Map
 
 	username string
 	user string
@@ -50,20 +49,16 @@ type Member struct {
 	conn *websocket.Conn
 
 	// Buffered channel of outbound messages.
-	room chan []byte
-	send chan []byte
+	mapEnter chan *Member
+	move chan map[string]string
 	test_connect chan []byte
-	room_created chan map[string]string
-	room_deleted chan []byte
 	receive_error chan []byte
 }
 
 func (m *Member) readPump() {
 	defer func() {
-		if m.hub.room_id != "None" {
-			m.hub.unregister <- m
-		}
-		m.theatre.unregisterMember <- m
+		m.mp.unregister <- m
+		m.world.unregisterMember <- m
 		m.conn.Close()
 	}()
 	m.conn.SetReadLimit(maxMessageSize)
@@ -85,40 +80,37 @@ func (m *Member) readPump() {
 				case "test_connect":
 					messageFullByte := []byte(m.user)
 					m.test_connect <- messageFullByte
-				case "send_message":
-					content := event["data"].(string)
-					messageFullByte := []byte(string(m.user)+"&"+m.username+"&"+m.image+"&"+content)
-					m.hub.broadcast <- messageFullByte
-				case "enter_room":
-					if m.hub.room_id != "None" {
-						m.hub.unregister <- m
+				case "move":
+					position := event["data"].(map[string]string)
+					positionX := position["x"]
+					positionY := position["y"]
+					m.mp.move <- map[string]string{
+						"user": m.user,
+						"x": positionX,
+						"y": positionY,
 					}
-					room_id := event["data"].(map[string]interface{})["room_id"].(string)
-					roomRaws, err := models.SelectQuery(
-						"select id from web_chatroom as room where id = ?", room_id)
-					if err != nil {
-						m.receive_error <- []byte("0002")
-						log.Fatalln(err)
+				case "enter_map":
+					if m.mp.name != "None" {
+						m.mp.unregister <- m
 					}
-					if len(roomRaws) == 0 {
-						m.receive_error <- []byte("0002")
-					}
-					if hub, ok := m.theatre.hubs[room_id]; ok {
-						m.hub = hub
-						m.hub.register <- m
+					randNum := tools.GenerateRandomNumber(100)
+					if v := randNum % 2; v==0 || len(m.world.maps) == 0{
+						empty_map := newMap(m.world)
+						m.world.register <- empty_map
+						m.mp = empty_map
+						m.mp.register <- m
 					} else {
-						empty_hub := newHub(m.theatre)
-						empty_hub.room_id = room_id
-						m.theatre.register <- empty_hub
-						m.hub = empty_hub
-						m.hub.register <- m
+						maps := m.world.maps
+						randNumLen := tools.GenerateRandomNumber(len(maps))
+						for mp , _ := range maps {
+							if randNumLen == 0 {
+								m.mp = mp
+								m.mp.register <- m
+								break
+							}
+							randNumLen = randNumLen - 1
+						}
 					}
-				case "delete_room":
-					room_id := event["data"].(map[string]interface{})["room_id"].(string)
-					if hub, ok := m.theatre.hubs[room_id]; ok {
-						m.theatre.unregister <- hub
-					}
-					m.theatre.deleteHub <- []byte(room_id)
 			}
 		}
 	}
@@ -161,7 +153,7 @@ func (m *Member) writePump() {
 					return
 				}
 
-			case message, ok := <-m.room:
+			case moveDate, ok := <-m.move:
 				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if !ok {
 					// The hub closed the channel.
@@ -174,25 +166,23 @@ func (m *Member) writePump() {
 					return
 				}
 
-				messageArray := strings.SplitN(string(message), "&", 3)
 				messageData := make(map[string]interface{})
 				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{
-					"rid": messageArray[0],
-					"create_date": messageArray[1] + ".000000",
-					"content": messageArray[2],
+					"user": moveDate["user"],
+					"x": moveDate["x"],
+					"y": moveDate["y"],
 				})
 				// Add queued chat messages to the current websocket message.
-				n := len(m.room)
+				n := len(m.move)
 				for i := 0; i < n; i++ {
-					messageArray := strings.SplitN(string(message), "&", 3)
 					messageArrays = append(messageArrays, map[string]string{
-						"rid": messageArray[0],
-						"create_date": messageArray[1] + ".000000",
-						"content": messageArray[2],
+						"user": moveDate["user"],
+						"x": moveDate["x"],
+						"y": moveDate["y"],
 					})
 				}
-				messageData["method"] = "unread_room"
+				messageData["method"] = "move"
 				messageData["data"] = messageArrays
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
@@ -201,7 +191,7 @@ func (m *Member) writePump() {
 				if err := w.Close(); err != nil {
 					return
 				}
-			case message, ok := <-m.send:
+			case member, ok := <-m.mapEnter:
 				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if !ok {
 					// The hub closed the channel.
@@ -214,93 +204,27 @@ func (m *Member) writePump() {
 					return
 				}
 
-				messageArray := strings.SplitN(string(message), "&", 7)
 				messageData := make(map[string]interface{})
 				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{
-					"mid": messageArray[0],
-					"rid": messageArray[1],
-					"create_date": messageArray[2] + ".000000",
-					"from_uid": messageArray[3],
-					"from_name": messageArray[4],
-					"image": messageArray[5],
-					"content": messageArray[6],
+					"user": member.user,
+					"image": member.image,
+					"username": member.username,
 				})
 				// Add queued chat messages to the current websocket message.
-				n := len(m.send)
+				n := len(m.mapEnter)
 				for i := 0; i < n; i++ {
-					messageArray := strings.SplitN(string(<-m.send), "&", 7)
 					messageArrays = append(messageArrays, map[string]string{
-						"mid": messageArray[0],
-						"rid": messageArray[1],
-						"create_date": messageArray[2] + ".000000",
-						"from_uid": messageArray[3],
-						"from_name": messageArray[4],
-						"image": messageArray[5],
-						"content": messageArray[6],
+						"user": member.user,
+						"image": member.image,
+						"username": member.username,
 					})
 				}
-				messageData["method"] = "message_send"
+				messageData["method"] = "mapEnter"
 				messageData["data"] = messageArrays
 				encoder := json.NewEncoder(w)
 				encoder.SetEscapeHTML(false)
 				encoder.Encode(messageData)
-				if err := w.Close(); err != nil {
-					return
-				}
-			case room, ok := <-m.room_created:
-				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
-				if !ok {
-					// The hub closed the channel.
-					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
-					return
-				}
-
-				w, err := m.conn.NextWriter(websocket.TextMessage)
-				if err != nil {
-					return
-				}
-				messageData := make(map[string]interface{})
-				messageArrays := make([]map[string]string, 0)
-				messageArrays = append(messageArrays, room)
-				// Add queued chat messages to the current websocket message.
-				n := len(m.room_created)
-				for i := 0; i < n; i++ {
-					messageArrays = append(messageArrays, <-m.room_created)
-				}
-				messageData["method"] = "room_created"
-				messageData["data"] = messageArrays
-				json.NewEncoder(w).Encode(messageData)
-				if err := w.Close(); err != nil {
-					return
-				}
-			case room_deleted, ok := <-m.room_deleted:
-				m.conn.SetWriteDeadline(time.Now().Add(writeWait))
-				if !ok {
-					// The hub closed the channel.
-					m.conn.WriteMessage(websocket.CloseMessage, []byte{})
-					return
-				}
-
-				w, err := m.conn.NextWriter(websocket.TextMessage)
-				if err != nil {
-					return
-				}
-				messageData := make(map[string]interface{})
-				messageArrays := make([]map[string]string, 0)
-				messageArrays = append(messageArrays, map[string]string{
-					"room_id": string(room_deleted),
-				})
-				// Add queued chat messages to the current websocket message.
-				n := len(m.room_deleted)
-				for i := 0; i < n; i++ {
-					messageArrays = append(messageArrays, map[string]string{
-						"room_id": string(<-m.room_deleted),
-					})
-				}
-				messageData["method"] = "room_deleted"
-				messageData["data"] = messageArrays
-				json.NewEncoder(w).Encode(messageData)
 				if err := w.Close(); err != nil {
 					return
 				}
@@ -323,7 +247,7 @@ func (m *Member) writePump() {
 					"code": string(error_code),
 				})
 				// Add queued chat messages to the current websocket message.
-				n := len(m.room_deleted)
+				n := len(m.receive_error)
 				for i := 0; i < n; i++ {
 					messageArrays = append(messageArrays, map[string]string{
 						"error": error_ws.Errormessagegenerate(string(error_code)),
@@ -345,16 +269,16 @@ func (m *Member) writePump() {
 	}
 }
 
-func ServeWs(w http.ResponseWriter, r *http.Request, theatre *Theatre)  {
+func ServeWs(w http.ResponseWriter, r *http.Request, world *World)  {
 	signed, userId := tools.SingleSign(r)
 	if signed == false {
 		http.Error(w, "Please Sign in!", http.StatusOK)
 		return
 	}
-	if member_existed, ok := theatre.members[userId];ok{
+	if member_existed, ok := world.members[userId];ok{
 		member_existed.receive_error <- []byte("0003")
-		delete(theatre.members, member_existed.user)
-		delete(member_existed.hub.members, member_existed)
+		delete(world.members, member_existed.user)
+		delete(member_existed.mp.members, member_existed.user)
 		member_existed.conn.Close()
 	}
 
@@ -365,30 +289,27 @@ func ServeWs(w http.ResponseWriter, r *http.Request, theatre *Theatre)  {
 	}
 
 	userRow, err := models.SelectQuery(
-		"select user.username, guser.avatar_image_small as image from auth_user as user " +
-			"inner join web_ggacuser as guser on guser.user_ptr_id = user.id where user.id = ?", userId)
+		"select username, avatar_image as image from users where id = ?", userId)
 	if err != nil {
 		log.Printf("error: %v", err)
 		http.Error(w, "DB ERROR", http.StatusInternalServerError)
 		return
 	}
 
-	hub := newHub(theatre)
+	mp := newMap(world)
 	member := &Member{
-		theatre: theatre,
+		world: world,
 		conn: conn,
-		hub:hub,
-		room: make(chan []byte, 256),
+		mp:mp,
 		user: userId,
-		send: make(chan []byte, 1024),
 		username:userRow[0]["username"],
 		image:userRow[0]["image"],
 		test_connect:make(chan []byte,256),
-		room_created:make(chan map[string]string),
-		room_deleted:make(chan []byte,256),
+		move:make(chan map[string]string),
+		mapEnter:make(chan *Member),
 		receive_error:make(chan []byte,256),
 	}
-	member.theatre.registerMember <- member
+	member.world.registerMember <- member
 	go member.writePump()
 	go member.readPump()
 }
