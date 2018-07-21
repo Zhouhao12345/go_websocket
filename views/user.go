@@ -48,7 +48,7 @@ func APILogin(w http.ResponseWriter, r *http.Request)  {
 	result , err := models.SelectQuery(
 		"select id , password from users where username = ?", username)
 	if err != nil {
-		log.Printf(err.Error());
+		log.Printf(err.Error())
 		http.Error(w, "DB ERROR", http.StatusServiceUnavailable)
 		return
 	}
@@ -71,13 +71,13 @@ func APILogin(w http.ResponseWriter, r *http.Request)  {
 	sessionKey := uuid.Must(uuid.NewV4()).String()
 	err1 := cache.Client.HSet("session:"+ sessionKey, "id", result[0]["id"]).Err()
 	if err1 != nil {
-		log.Printf(err.Error());
+		log.Printf(err.Error())
 		http.Error(w, "Cache ERROR", http.StatusServiceUnavailable)
 		return
 	}
 	err2 := cache.Client.Expire("session:"+ sessionKey, config.SESSION_MAX_AGE * time.Second).Err()
 	if err2 != nil {
-		log.Printf(err.Error());
+		log.Printf(err.Error())
 		http.Error(w, "Cache ERROR", http.StatusServiceUnavailable)
 		return
 	}
@@ -108,7 +108,7 @@ func APIRegister(w http.ResponseWriter, r *http.Request)  {
 	_ , err := models.InsertQuery(
 		"insert into users (username , password ) VALUES (? , ?)", username, password_base64)
 	if err != nil {
-		log.Printf(err.Error());
+		log.Printf(err.Error())
 		http.Error(w, "DB ERROR", http.StatusServiceUnavailable)
 		return
 	}
