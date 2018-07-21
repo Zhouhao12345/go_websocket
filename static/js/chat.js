@@ -158,6 +158,7 @@ var app = new Vue({
                 var that = this;
                 var interval = setInterval(function () {
                     console.log(that.conn.readyState);
+                    console.log(msg);
                     if (that.conn.readyState===1) {
                         that.conn.send(objToJson(msg));
                         clearInterval(interval);
