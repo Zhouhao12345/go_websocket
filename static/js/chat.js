@@ -114,28 +114,6 @@ var app = new Vue({
                 } else {
                     this.isMobile = 'yes';
                 }
-                var that = this;
-                document.onkeydown = function(){
-                    var left = parseInt($("#user"+that.selfInfo.id.toString()).css("left").split("%")[0]);
-                    var top = parseInt($("#user"+that.selfInfo.id.toString()).css("top").split("%")[0]);
-                    var key = window.event.keyCode;
-                    // left
-                    if(key == 37){
-                        that.move(left-1,top);
-                    }
-                    // top
-                    if(key == 38){
-                        that.move(left, top-1);
-                    }
-                    // right
-                    if(key == 39){
-                        that.move(left+1,top);
-                    }
-                    // down
-                    if(key == 40){
-                        that.move(left, top+1);
-                    }
-                }
             },
             get_user: function () {
                 var that = this;
@@ -282,6 +260,28 @@ var app = new Vue({
                     } else {
                         $("#user"+msg.data[0].user).css("left", "50%");
                         $("#user"+msg.data[0].user).css("top", "50%");
+                    }
+                    var that = this;
+                    document.onkeydown = function(){
+                        var left = parseInt($("#user"+that.selfInfo.id.toString()).css("left").split("%")[0]);
+                        var top = parseInt($("#user"+that.selfInfo.id.toString()).css("top").split("%")[0]);
+                        var key = window.event.keyCode;
+                        // left
+                        if(key == 37){
+                            that.move(left-1,top);
+                        }
+                        // top
+                        if(key == 38){
+                            that.move(left, top-1);
+                        }
+                        // right
+                        if(key == 39){
+                            that.move(left+1,top);
+                        }
+                        // down
+                        if(key == 40){
+                            that.move(left, top+1);
+                        }
                     }
                 });
             },
