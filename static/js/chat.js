@@ -238,6 +238,7 @@ var app = new Vue({
                             "top: "+members[i].positionY+"%;'>" + members[i].name +"</span>"
                         );
                     }
+                    console.log(app.selfInfo);
                     document.onkeydown = function(){
                         var left = parseInt($("#user"+app.selfInfo.id.toString()).css("left").split("%")[0]);
                         var top = parseInt($("#user"+app.selfInfo.id.toString()).css("top").split("%")[0]);
