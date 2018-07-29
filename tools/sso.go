@@ -16,7 +16,6 @@ func SingleSign(r *http.Request) (signed bool, userId string) {
 
 	//todo fixme improve it
 	sessionValue, err1 := cache.Client.HGet("session:" + sessionId.Value, "id").Result()
-	log.Printf(sessionValue)
 	if err1 != nil {
 		log.Printf(err1.Error())
 		return false, "0"

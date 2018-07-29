@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gameing => gamer</title>
+    <link rel="stylesheet" type="text/css" href="http://pre-cdn.ggac.net/lib/css/toastr-2.1.3.min.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/chat.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div id="topBox">
+        <ul>
+            <template v-if="selfInfo.id == 0">
+                <li><a href="javascript:;" @click="showLoginFrame">登录</a></li>
+                <li><a href="javascript:;" @click="showRegisterFrame">注册</a></li>
+            </template>
+            <template v-else>
+                <li>{{selfInfo.username}}</li>
+                <li><a href="javascript:;" @click="logout">登出</a></li>
+            </template>
+        </ul>
+    </div>
+    <div id="phaser-example">
+    </div>
+    <div class="loginFrame">
+        <div class="form-top">
+            <a class="close-btn" href="javascript:;" @click="closeLoginFrame">关闭</a>
+        </div>
+        <div class="form-group">
+            <label for="username" class="username">用户名</label>
+            <input id="username-login" v-model="username" name="username" maxlength="20" class="form-control form-lr-input-style" type="text">
+        </div>
+        <div class="form-group">
+            <label for="password" class="password">密码</label>
+            <input id="password-login" v-model="password" name="password" class="form-control form-lr-input-style" type="password">
+        </div>
+        <a type="submit" href="javascript:;" class="submit-btn" @click="login">登录</a>
+    </div>
+    <div class="RegisterFrame">
+        <div class="form-top">
+            <a class="close-btn" href="javascript:;" @click="closeRegisterFrame">关闭</a>
+        </div>
+        <div class="form-group">
+            <label for="username" class="username">用户名</label>
+            <input id="username-register" v-model="username" name="username" maxlength="20" class="form-control form-lr-input-style" type="text">
+        </div>
+        <div class="form-group">
+            <label for="password" class="password">密码</label>
+            <input id="password-register" v-model="password" name="password" class="form-control form-lr-input-style" type="password">
+        </div>
+        <a type="submit" href="javascript:;" class="submit-btn" @click="Register">注册</a>
+    </div>
+</div>
+</body>
+<script src="/static/js/jquery-2.0.3.min.js"></script>
+<script src="/static/js/phaser.2.6.2.min.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/vue-2.5.13.min.js"></script>
+<script src="http://pre-cdn.ggac.net/lib/js/toastr-2.1.3.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.mousewheel.min.js"></script>
+<script type="text/javascript" src="static/js/jquery-browser.js"></script>
+<!--<script type="text/javascript" src="http://pre-cdn.ggac.net/lib/js/element-ui-2.2.2.js"></script>-->
+<script type="text/javascript" src="http://pre-cdn.ggac.net/lib/js/vue-lazyload-1.2.3.js"></script>
+<script src="/static/js/common.js"></script>
+<script src="/static/js/chat.js"></script>
+</html>

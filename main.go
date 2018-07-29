@@ -22,6 +22,7 @@ func main() {
 	go world.Run()
 
 	// view
+	http.HandleFunc("/", views.ServeIndex)
 	http.HandleFunc("/home", views.ServeHome)
 	http.HandleFunc("/login", views.ServeLogin)
 

@@ -81,14 +81,16 @@ func (h *Map) run() {
 			}
 		case moveData := <-h.move:
 			for memberID, member := range h.members {
-				select {
-				case member.move <- moveData:
-				default:
-					close(member.move)
-					close(member.mapEnter)
-					close(member.test_connect)
-					close(member.receive_error)
-					delete(h.members, memberID)
+				if moveData["user"] != member.user{
+					select {
+					case member.move <- moveData:
+					default:
+						close(member.move)
+						close(member.mapEnter)
+						close(member.test_connect)
+						close(member.receive_error)
+						delete(h.members, memberID)
+					}
 				}
 			}
 		}

@@ -19,6 +19,14 @@ func ServeHome(w http.ResponseWriter, r *http.Request)  {
 	http.ServeFile(w, r, config.HOME_TEMPLATE)
 }
 
+func ServeIndex(w http.ResponseWriter, r *http.Request)  {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	http.ServeFile(w, r, config.INDEX_TEMPLATE)
+}
+
 func ServeHomeMb(w http.ResponseWriter, r *http.Request)  {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

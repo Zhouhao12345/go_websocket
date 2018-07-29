@@ -90,13 +90,17 @@ func (m *Member) readPump() {
 						position := event["data"].(map[string]interface{})
 						positionX := position["x"].(string)
 						positionY := position["y"].(string)
+						positionZ := position["z"].(string)
 						m.pos.x , _ = strconv.Atoi(positionX)
 						m.pos.y , _ = strconv.Atoi(positionY)
 						m.mp.move <- map[string]string{
 							"user": m.user,
 							"x": positionX,
 							"y": positionY,
+							"z": positionZ,
 						}
+					} else {
+						m.receive_error <- []byte("0003")
 					}
 				case "enter_map":
 					if m.mp.name != "None" {
@@ -183,6 +187,7 @@ func (m *Member) writePump() {
 					"user": moveDate["user"],
 					"x": moveDate["x"],
 					"y": moveDate["y"],
+					"z": moveDate["z"],
 				})
 				// Add queued chat messages to the current websocket message.
 				n := len(m.move)
@@ -192,6 +197,7 @@ func (m *Member) writePump() {
 						"user": moveDate["user"],
 						"x": moveDate["x"],
 						"y": moveDate["y"],
+						"z": moveDate["z"],
 					})
 				}
 				messageData["method"] = "move"
@@ -215,7 +221,6 @@ func (m *Member) writePump() {
 				if err != nil {
 					return
 				}
-
 				messageData := make(map[string]interface{})
 				messageArrays := make([]map[string]string, 0)
 				messageArrays = append(messageArrays, map[string]string{

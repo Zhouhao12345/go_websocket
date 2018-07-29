@@ -10,6 +10,18 @@ function objToJson(obj) {
 var app = new Vue({
         el: '#app',
         data: {
+            Phaser: Phaser,
+            map: false,
+            tileset: false,
+            layer: false,
+            player: false,
+            facing: 'left',
+            jumpTimer: 0,
+            cursors: false,
+            jumpButton: false,
+            bg: false,
+            player_name: false,
+            game: false,
             username: "",
             password: "",
             isMobile: 'yes',
@@ -24,11 +36,107 @@ var app = new Vue({
             users: {},
             lockReconnect: false,
         },
-        created: function() {
-            this.initData();
+        mounted: function() {
             this.get_user();
         },
         methods: {
+            preload: function(){
+                app.game.load.tilemap('level1', '/static/image/games/starstruck/level1.json', null, app.Phaser.Tilemap.TILED_JSON);
+                app.game.load.image('tiles-1', '/static/image/games/starstruck/tiles-1.png');
+                app.game.load.spritesheet('dude', '/static/image/games/starstruck/dude.png', 32, 48);
+                app.game.load.spritesheet('droid', '/static/image/games/starstruck/droid.png', 32, 32);
+                app.game.load.image('starSmall', '/static/image/games/starstruck/star.png');
+                app.game.load.image('starBig', '/static/image/games/starstruck/star2.png');
+                app.game.load.image('background', '/static/image/games/starstruck/background2.png');
+                app.websocket_start();
+                app.enterMap();
+            },
+
+            created: function() {
+
+                app.game.physics.startSystem(app.Phaser.Physics.ARCADE);
+
+                app.game.stage.backgroundColor = '#000000';
+
+                app.bg = app.game.add.tileSprite(0, 0, 800, 600, 'background');
+                app.bg.fixedToCamera = true;
+
+                app.map = app.game.add.tilemap('level1');
+
+                app.map.addTilesetImage('tiles-1');
+
+                app.map.setCollisionByExclusion([ 13, 14, 15, 16, 46, 47, 48, 49, 50, 51 ]);
+
+                app.layer = app.map.createLayer('Tile Layer 1');
+
+                //  Un-comment this on to see the collision tiles
+                // layer.debug = true;
+
+                app.layer.resizeWorld();
+
+                app.game.physics.arcade.gravity.y = 250;
+
+                app.cursors = app.game.input.keyboard.createCursorKeys();
+                app.jumpButton = app.game.input.keyboard.addKey(app.Phaser.Keyboard.SPACEBAR);
+            },
+
+            update: function() {
+                for(var id in app.users){
+                    app.users[id].player_name.x = Math.floor(app.users[id].player.x - app.users[id].player.width / 2);
+                    app.users[id].player_name.y = Math.floor(app.users[id].player.y - app.users[id].player.height / 2);
+                    app.game.physics.arcade.collide(app.users[id].player, app.layer);
+                    app.users[id].player.body.velocity.x = 0;
+                }
+
+                var self = app.users[app.selfInfo.id];
+                if(self != undefined)
+                {
+                    if (app.cursors.left.isDown)
+                    {
+                        app.move(-150, 0, 0);
+                        self.player.body.velocity.x = -150;
+                        if (self.facing != 'left')
+                        {
+                            self.player.animations.play('left');
+                            self.facing = 'left';
+                        }
+                    }
+                    else if (app.cursors.right.isDown)
+                    {
+                        app.move(150, 0, 0);
+                        self.player.body.velocity.x = 150;
+                        if (self.facing != 'right')
+                        {
+                            self.player.animations.play('right');
+                            self.facing = 'right';
+                        }
+                    }
+                    else
+                    {
+                        if (self.facing != 'idle')
+                        {
+                            self.player.animations.stop();
+
+                            if (self.facing == 'left')
+                            {
+                                self.player.frame = 0;
+                            }
+                            else
+                            {
+                                self.player.frame = 5;
+                            }
+
+                            self.facing = 'idle';
+                        }
+                    }
+                    if (app.jumpButton.isDown && self.player.body.onFloor() && app.game.time.now > self.jumpTimer)
+                    {
+                        app.move(0, -250, 750);
+                        self.player.body.velocity.y = -250;
+                        self.jumpTimer = app.game.time.now + 750;
+                    }
+                }
+            },
             showLoginFrame: function(){
                 $(".loginFrame").show();
             },
@@ -108,12 +216,20 @@ var app = new Vue({
                 });
             },
             initData:function(){
-                var width = document.body.clientWidth;
-                if(width>=1200) {
-                    this.isMobile = 'no';
-                } else {
-                    this.isMobile = 'yes';
-                }
+                Vue.nextTick(function () {
+                    var Main = {
+                        preload: app.preload,
+                        create: app.created,
+                        update: app.update,
+                    };
+                    app.game = new app.Phaser.Game(
+                        800,
+                        600,
+                        Phaser.AUTO,
+                        'phaser-example');
+                    app.game.state.add("Main", Main);
+                    app.game.state.start("Main");
+                });
             },
             get_user: function () {
                 var that = this;
@@ -124,8 +240,7 @@ var app = new Vue({
                     success: function(response) {
                         if(response.return_code==0) {
                             that.selfInfo = response.data[0];
-                            that.websocket_start();
-                            that.enterMap();
+                            that.initData();
                         } else {
                             toastr.warning(response.result);
                         }
@@ -136,7 +251,6 @@ var app = new Vue({
                 var that = this;
                 var interval = setInterval(function () {
                     console.log(that.conn.readyState);
-                    console.log(msg);
                     if (that.conn.readyState===1) {
                         that.conn.send(objToJson(msg));
                         clearInterval(interval);
@@ -171,7 +285,7 @@ var app = new Vue({
                         that.conn.send(objToJson(message));
                     };
                     this.conn.onclose = function () {
-                        that.reconnect();
+                        // that.reconnect();
                     };
                     this.conn.onmessage = function (evt) {
                         var messages = evt.data.split('\n');
@@ -224,77 +338,67 @@ var app = new Vue({
                     var members = msg.data[0].members;
                     for(var i=0;i<members.length;i++)
                     {
-                        app.users[members[i].id] = {
-                            username : members[i].name,
-                            image : members[i].image,
-                        };
-                        $("#rightBox").append(
-                            "<span id='user"+members[i].id+"' style='" +
-                            "font-size: 50px; " +
-                            "text-align: center; " +
-                            "background-color: red; " +
-                            "position: relative; " +
-                            "left: "+members[i].positionX+"%; " +
-                            "top: "+members[i].positionY+"%;'>" + members[i].name +"</span>"
-                        );
-                    }
-                    console.log(app.selfInfo);
-                    document.onkeydown = function(){
-                        var left = parseInt($("#user"+app.selfInfo.id.toString()).css("left").split("%")[0]);
-                        var top = parseInt($("#user"+app.selfInfo.id.toString()).css("top").split("%")[0]);
-                        var key = window.event.keyCode;
-                        // left
-                        if(key == 37){
-                            app.move(left-1,top);
-                        }
-                        // top
-                        if(key == 38){
-                            app.move(left, top-1);
-                        }
-                        // right
-                        if(key == 39){
-                            app.move(left+1,top);
-                        }
-                        // down
-                        if(key == 40){
-                            app.move(left, top+1);
-                        }
+                        app.userCreated(members[i].id, members[i].name);
                     }
                 })
+            },
+            userCreated: function(id, username){
+                var player = app.game.add.sprite(32, 32, 'dude');
+                app.game.physics.enable(player, app.Phaser.Physics.ARCADE);
+
+                player.body.bounce.y = 0.2;
+                player.body.collideWorldBounds = true;
+                player.body.setSize(20, 32, 5, 16);
+
+                player.animations.add('left', [0, 1, 2, 3], 10, true);
+                player.animations.add('turn', [4], 20, true);
+                player.animations.add('right', [5, 6, 7, 8], 10, true);
+
+                player_name = app.game.add.text(16, 16, username, { fontSize: '5px', fill: '#000' });
+                if(id == app.selfInfo.id){
+                    app.game.camera.follow(player);
+                }
+                app.users[id] = {
+                    player: player,
+                    player_name: player_name,
+                    facing: "left",
+                    jumpTimer: 0,
+                }
             },
             handleMapEnter: function(msg) {
                 Vue.nextTick(function(){
                     if(app.users[msg.data[0].user]==undefined)
                     {
-                        app.users[msg.data[0].user] = {
-                            username : msg.data[0].username,
-                            image : msg.data[0].image,
-                        };
-                        $("#rightBox").append(
-                            "<span id='user"+msg.data[0].user+"' style='" +
-                            "font-size: 50px; " +
-                            "text-align: center; " +
-                            "background-color: red; " +
-                            "position: relative; " +
-                            "left: 50%; " +
-                            "top: 50%;'>" + msg.data[0].username +"</span>"
-                        );
+                        app.userCreated(msg.data[0].user, msg.data[0].username);
                     } else {
-                        $("#user"+msg.data[0].user).css("left", "50%");
-                        $("#user"+msg.data[0].user).css("top", "50%");
+                        app.users[msg.data[0].user].player.x = 32;
+                        app.users[msg.data[0].user].player.y = 32;
                     }
                 });
             },
             handleMove: function(msg) {
                 Vue.nextTick(function(){
-                    $("#user"+msg.data[0].user).css("left", msg.data[0].x+"%");
-                    $("#user"+msg.data[0].user).css("top", msg.data[0].y+"%");
+                    var id = msg.data[0].user;
+                    var x = parseInt(msg.data[0].x);
+                    var y = parseInt(msg.data[0].y);
+                    var z = parseInt(msg.data[0].z);
+                    if(x != 0)
+                    {
+                        app.users[id].player.body.velocity.x = x;
+                    }
+                    if(y != 0)
+                    {
+                        app.users[id].player.body.velocity.y = y;
+                    }
+                    if(z != 0)
+                    {
+                        app.users[id].jumpTimer = app.game.time.now + z;
+                    }
                 });
             },
             handleMapLeave: function(msg) {
                 Vue.nextTick(function(){
                     delete app.users[msg.data[0].user];
-                    $("#user"+msg.data[0].user).remove();
                 });
             },
             enterMap: function () {
@@ -303,12 +407,13 @@ var app = new Vue({
                     data:{}
                 });
             },
-            move: function (left,top) {
+            move: function (left,top,jump) {
                 this.submitCommand({
                     method: 'move',
                     data:{
                         x: left.toString(),
                         y: top.toString(),
+                        z: jump.toString(),
                     }
                 });
             },
